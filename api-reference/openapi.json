@@ -1,216 +1,1021 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
+    "title": "KalshiBackTest API",
+    "version": "1.0.0",
+    "summary": "Markets and full-depth snapshots for every Kalshi up/down crypto market.",
+    "description": "The **KalshiBackTest API** exposes the data that powers [kalshibacktest.com](https://kalshibacktest.com): Kalshi up/down crypto market metadata plus ~100 ms orderbook snapshots from open through settlement.\n\nEvery response uses the v1 envelope — `{ data, pagination?, meta }` on success, `{ error, meta }` on error. All endpoints are rate-limited per API key; limits are exposed via `X-RateLimit-*` response headers.\n\n**Supported deployments today (`coin:type`):** `btc:15m`, `eth:15m`, `sol:15m`, `doge:15m`, `xrp:15m`.\n\nSee [Error Codes](/api-reference/v1/error-codes) for the full machine-readable error catalogue.",
+    "contact": {
+      "name": "KalshiBackTest Support",
+      "url": "https://kalshibacktest.com",
+      "email": "support@kalshibacktest.com"
     },
-    "version": "1.0.0"
+    "license": {
+      "name": "Proprietary",
+      "url": "https://kalshibacktest.com/terms"
+    }
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "https://api.kalshibacktest.com",
+      "description": "Production"
     }
   ],
   "security": [
+    { "ApiKeyAuth": [] },
+    { "BearerAuth": [] }
+  ],
+  "tags": [
     {
-      "bearerAuth": []
+      "name": "Kalshi Markets",
+      "description": "Metadata and orderbook snapshots for Kalshi up/down crypto markets."
+    },
+    {
+      "name": "Utility",
+      "description": "Health checks and other non-authenticated utility endpoints."
     }
   ],
   "paths": {
-    "/plants": {
+    "/v1/health": {
       "get": {
-        "description": "Returns all plants from the system that the user has access to",
+        "tags": ["Utility"],
+        "summary": "Health check",
+        "operationId": "healthCheck",
+        "description": "Public health check — no API key required. Returns `ok` when every configured database pool is reachable, `degraded` otherwise. Use it as a liveness/readiness probe.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service status. `status` is `ok` only when every pool in `pools` is `true`.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" },
+                "example": {
+                  "data": {
+                    "status": "ok",
+                    "pools": {
+                      "btc:15m":  true,
+                      "eth:15m":  true,
+                      "sol:15m":  true,
+                      "doge:15m": true,
+                      "xrp:15m":  true,
+                      "auth":     true
+                    },
+                    "markets": [
+                      { "coin": "btc",  "type": "15m" },
+                      { "coin": "eth",  "type": "15m" },
+                      { "coin": "sol",  "type": "15m" },
+                      { "coin": "doge", "type": "15m" },
+                      { "coin": "xrp",  "type": "15m" }
+                    ]
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/{coin}/{type}/markets": {
+      "get": {
+        "tags": ["Kalshi Markets"],
+        "summary": "List Markets",
+        "operationId": "listMarkets",
+        "description": "Cursor-paginated markets for a single Kalshi Workers deployment (`{coin}` × `{type}`), ordered `close_time DESC, market_ticker DESC`.\n\nPagination is keyset — pass `pagination.next_cursor` from one response as `?cursor=` on the next request; stop when `has_more` is `false`. `total_count` is omitted by default; opt in with `?include_count=true`.",
         "parameters": [
+          { "$ref": "#/components/parameters/Coin" },
+          { "$ref": "#/components/parameters/Type" },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by Kalshi market status.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["open", "closed", "settled", "initialized"]
+            },
+            "example": "settled"
+          },
+          {
+            "name": "resolved",
+            "in": "query",
+            "description": "`true` returns only markets with a non-null `result`. `false` returns only unresolved markets. Omit to return everything.",
+            "required": false,
+            "schema": { "type": "boolean" },
+            "example": true
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "description": "Lower bound on `close_time`. Accepts millisecond epoch (`1745337000000`) or ISO-8601 (`2026-04-22T18:00:00Z`).",
+            "required": false,
+            "schema": { "type": "string" },
+            "example": "2026-04-22T00:00:00Z"
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "description": "Upper bound on `close_time`. Same format as `start_time`.",
+            "required": false,
+            "schema": { "type": "string" },
+            "example": "2026-04-22T23:59:59Z"
+          },
           {
             "name": "limit",
             "in": "query",
-            "description": "The maximum number of results to return",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
+            "description": "Page size. 1–200.",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 },
+            "example": 50
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque keyset cursor from a prior `pagination.next_cursor`. Treat as an ASCII-safe string — do not parse.",
+            "required": false,
+            "schema": { "type": "string" },
+            "example": "eyJjdCI6IjIwMjYtMDQtMjJUMTg6MzA6MDBaIiwidGsiOiJLWEJUQzE1TS0yNkFQUjIyMTgzMC1UMTA1MDAwIn0"
+          },
+          {
+            "name": "include_count",
+            "in": "query",
+            "description": "When `true`, run a `COUNT(*)` matching your filter and populate `pagination.total_count`.",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "example": false
           }
         ],
         "responses": {
           "200": {
-            "description": "Plant response",
+            "description": "Paginated list of markets.",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
+                "schema": { "$ref": "#/components/schemas/MarketsPageResponse" },
+                "example": {
+                  "data": [
+                    {
+                      "market_ticker": "KXBTC15M-26APR221830-T105000",
+                      "event_ticker": "KXBTC15M-26APR221830",
+                      "series_ticker": "KXBTC15M",
+                      "title": "Bitcoin above $105,000 at 18:30?",
+                      "subtitle": "15-minute market",
+                      "rules_primary": "If the final BTC price is strictly greater than $105,000 at 18:30 ET, this market resolves YES.",
+                      "strike_type": "greater",
+                      "floor_strike": 105000.0,
+                      "cap_strike": null,
+                      "open_time": "2026-04-22T18:15:00Z",
+                      "close_time": "2026-04-22T18:30:00Z",
+                      "expiration_time": "2026-04-22T18:30:00Z",
+                      "coin_price_start": 104872.12,
+                      "coin_price_end": 105224.45,
+                      "expiration_value": 105224.45,
+                      "result": "yes",
+                      "settlement_ts": "2026-04-22T18:30:12Z",
+                      "status": "settled",
+                      "created_at": "2026-04-22T18:14:58Z",
+                      "updated_at": "2026-04-22T18:30:12Z"
+                    }
+                  ],
+                  "pagination": {
+                    "next_cursor": "eyJjdCI6IjIwMjYtMDQtMjJUMTg6MzA6MDBaIiwidGsiOiJLWEJUQzE1TS0yNkFQUjIyMTgzMC1UMTA1MDAwIn0",
+                    "has_more": true,
+                    "limit": 50,
+                    "count": 50,
+                    "total_count": null
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
                   }
                 }
               }
             }
           },
-          "400": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Plant"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
         }
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+    "/v1/{coin}/{type}/markets/{ticker}": {
+      "get": {
+        "tags": ["Kalshi Markets"],
+        "summary": "Get Market by Ticker",
+        "operationId": "getMarket",
+        "description": "Fetch a single market by its Kalshi `market_ticker`. Unknown tickers return `404` with `error.code = MARKET_NOT_FOUND`.",
         "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
+          { "$ref": "#/components/parameters/Coin" },
+          { "$ref": "#/components/parameters/Type" },
+          { "$ref": "#/components/parameters/Ticker" }
         ],
         "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
-          },
-          "400": {
-            "description": "unexpected error",
+          "200": {
+            "description": "The requested market.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
+                "schema": { "$ref": "#/components/schemas/MarketResponse" },
+                "example": {
+                  "data": {
+                    "market_ticker": "KXBTC15M-26APR221830-T105000",
+                    "event_ticker": "KXBTC15M-26APR221830",
+                    "series_ticker": "KXBTC15M",
+                    "title": "Bitcoin above $105,000 at 18:30?",
+                    "subtitle": "15-minute market",
+                    "rules_primary": "If the final BTC price is strictly greater than $105,000 at 18:30 ET, this market resolves YES.",
+                    "strike_type": "greater",
+                    "floor_strike": 105000.0,
+                    "cap_strike": null,
+                    "open_time": "2026-04-22T18:15:00Z",
+                    "close_time": "2026-04-22T18:30:00Z",
+                    "expiration_time": "2026-04-22T18:30:00Z",
+                    "coin_price_start": 104872.12,
+                    "coin_price_end": 105224.45,
+                    "expiration_value": 105224.45,
+                    "result": "yes",
+                    "settlement_ts": "2026-04-22T18:30:12Z",
+                    "status": "settled",
+                    "created_at": "2026-04-22T18:14:58Z",
+                    "updated_at": "2026-04-22T18:30:12Z"
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
                 }
               }
             }
-          }
-        }
-      }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
-      "post": {
-        "description": "Information about a new plant added to the store",
-        "requestBody": {
-          "description": "Plant added to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+          },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "404": {
+            "description": "No market with that ticker exists.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "error": {
+                    "code": "MARKET_NOT_FOUND",
+                    "message": "Market not found",
+                    "details": { "market_ticker": "KXBTC15M-00XXX00000-T000000" }
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
               }
             }
+          },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      }
+    },
+    "/v1/{coin}/{type}/markets/{ticker}/snapshots": {
+      "get": {
+        "tags": ["Kalshi Markets"],
+        "summary": "List Market Snapshots",
+        "operationId": "listSnapshots",
+        "description": "Cursor-paginated ~100 ms snapshots of a single market, ordered `time ASC, id ASC` so the response reads as a forward replay.\n\nPass `include_orderbook=true` to receive full top-15 YES/NO ladders as `{\"bids\": [[price, qty], ...]}`. Large pages with orderbook depth can exceed 1 MB.",
+        "parameters": [
+          { "$ref": "#/components/parameters/Coin" },
+          { "$ref": "#/components/parameters/Type" },
+          { "$ref": "#/components/parameters/Ticker" },
+          {
+            "name": "start_time",
+            "in": "query",
+            "description": "Lower bound on snapshot `time`. Millisecond epoch or ISO-8601.",
+            "required": false,
+            "schema": { "type": "string" },
+            "example": "2026-04-22T18:15:00Z"
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "description": "Upper bound on snapshot `time`.",
+            "required": false,
+            "schema": { "type": "string" },
+            "example": "2026-04-22T18:30:00Z"
+          },
+          {
+            "name": "include_orderbook",
+            "in": "query",
+            "description": "Include `orderbook_yes` and `orderbook_no` top-15 ladders on each row.",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "example": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size. 1–1000.",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 100 },
+            "example": 100
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque keyset cursor from a prior `pagination.next_cursor`.",
+            "required": false,
+            "schema": { "type": "string" },
+            "example": "eyJ0cyI6IjIwMjYtMDQtMjJUMTg6MTU6MDMuMjE0WiIsImlkIjoxMjk4Mzc0fQ"
+          },
+          {
+            "name": "include_count",
+            "in": "query",
+            "description": "When `true`, run a `COUNT(*)` and populate `pagination.total_count`.",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "example": false
           }
-        },
+        ],
         "responses": {
           "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
+            "description": "Paginated list of snapshots (ASC by time).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SnapshotsPageResponse" },
+                "example": {
+                  "data": [
+                    {
+                      "id": 1298374,
+                      "time": "2026-04-22T18:15:03.214Z",
+                      "market_ticker": "KXBTC15M-26APR221830-T105000",
+                      "yes_best_bid": 0.42,
+                      "no_best_bid": 0.57,
+                      "coin_price": 104872.45,
+                      "seq": 8871
+                    },
+                    {
+                      "id": 1298375,
+                      "time": "2026-04-22T18:15:03.317Z",
+                      "market_ticker": "KXBTC15M-26APR221830-T105000",
+                      "yes_best_bid": 0.43,
+                      "no_best_bid": 0.56,
+                      "coin_price": 104875.10,
+                      "seq": 8872
+                    }
+                  ],
+                  "pagination": {
+                    "next_cursor": "eyJ0cyI6IjIwMjYtMDQtMjJUMTg6MTU6MDMuMzE3WiIsImlkIjoxMjk4Mzc1fQ",
+                    "has_more": true,
+                    "limit": 100,
+                    "count": 100,
+                    "total_count": null
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "404": {
+            "description": "No market with that ticker exists.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "error": {
+                    "code": "MARKET_NOT_FOUND",
+                    "message": "Market not found",
+                    "details": { "market_ticker": "KXBTC15M-00XXX00000-T000000" }
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
+        }
+      }
+    },
+    "/v1/{coin}/{type}/markets/{ticker}/snapshots/at/{timestamp}": {
+      "get": {
+        "tags": ["Kalshi Markets"],
+        "summary": "Snapshot at Timestamp",
+        "operationId": "getSnapshotAt",
+        "description": "Return the snapshot whose `time` is closest to `{timestamp}`. The response includes a `gap_ms` field so you can see how stale the match is. Returns `404` with `SNAPSHOT_NOT_FOUND` when no snapshot falls within `tolerance_ms`.",
+        "parameters": [
+          { "$ref": "#/components/parameters/Coin" },
+          { "$ref": "#/components/parameters/Type" },
+          { "$ref": "#/components/parameters/Ticker" },
+          {
+            "name": "timestamp",
+            "in": "path",
+            "required": true,
+            "description": "Target moment. Accepts millisecond epoch or ISO-8601.",
+            "schema": { "type": "string" },
+            "example": "2026-04-22T18:20:00Z"
+          },
+          {
+            "name": "include_orderbook",
+            "in": "query",
+            "description": "Include full top-15 YES / NO orderbook ladders on the returned snapshot.",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "example": false
+          },
+          {
+            "name": "tolerance_ms",
+            "in": "query",
+            "description": "Maximum acceptable gap (ms) between the request `timestamp` and the returned snapshot's `time`. 0–60000.",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 0, "maximum": 60000, "default": 2000 },
+            "example": 2000
           }
+        ],
+        "responses": {
+          "200": {
+            "description": "The closest snapshot, with `gap_ms` showing how far away from `timestamp` it is.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SnapshotResponse" },
+                "example": {
+                  "data": {
+                    "id": 1298412,
+                    "time": "2026-04-22T18:20:00.186Z",
+                    "market_ticker": "KXBTC15M-26APR221830-T105000",
+                    "yes_best_bid": 0.48,
+                    "no_best_bid": 0.51,
+                    "coin_price": 104998.21,
+                    "seq": 12440,
+                    "gap_ms": 186
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" },
+          "404": {
+            "description": "Either the market does not exist, or no snapshot fell within `tolerance_ms` of the requested time.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "MarketNotFound": {
+                    "summary": "Unknown market ticker",
+                    "value": {
+                      "error": {
+                        "code": "MARKET_NOT_FOUND",
+                        "message": "Market not found",
+                        "details": { "market_ticker": "KXBTC15M-00XXX00000-T000000" }
+                      },
+                      "meta": {
+                        "request_id": "req_a1b2c3d4e5f6",
+                        "timestamp": "2026-04-24T18:00:00Z"
+                      }
+                    }
+                  },
+                  "SnapshotNotFound": {
+                    "summary": "No snapshot within tolerance",
+                    "value": {
+                      "error": {
+                        "code": "SNAPSHOT_NOT_FOUND",
+                        "message": "No snapshot within 2000 ms of requested timestamp",
+                        "details": {
+                          "market_ticker": "KXBTC15M-26APR221830-T105000",
+                          "timestamp": "2026-04-22T18:20:00Z",
+                          "nearest_gap_ms": 4821,
+                          "tolerance_ms": 2000
+                        }
+                      },
+                      "meta": {
+                        "request_id": "req_a1b2c3d4e5f6",
+                        "timestamp": "2026-04-24T18:00:00Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": { "$ref": "#/components/responses/RateLimitError" }
         }
       }
     }
   },
   "components": {
-    "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
-          },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Pass your API key in the `X-API-Key` header."
       },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "kbt_...",
+        "description": "Alternatively pass the key as `Authorization: Bearer <key>`."
+      }
+    },
+    "parameters": {
+      "Coin": {
+        "name": "coin",
+        "in": "path",
+        "required": true,
+        "description": "Coin segment. One of `btc`, `eth`, `sol`, `doge`, `xrp`.",
+        "schema": {
+          "type": "string",
+          "enum": ["btc", "eth", "sol", "doge", "xrp"]
+        },
+        "example": "btc"
+      },
+      "Type": {
+        "name": "type",
+        "in": "path",
+        "required": true,
+        "description": "Market type. Today only `15m` is deployed.",
+        "schema": {
+          "type": "string",
+          "enum": ["15m"]
+        },
+        "example": "15m"
+      },
+      "Ticker": {
+        "name": "ticker",
+        "in": "path",
+        "required": true,
+        "description": "The Kalshi `market_ticker` (e.g. `KXBTC15M-26APR221830-T105000`).",
+        "schema": { "type": "string" },
+        "example": "KXBTC15M-26APR221830-T105000"
+      }
+    },
+    "responses": {
+      "AuthError": {
+        "description": "Authentication failed.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "Missing": {
+                "summary": "No API key sent",
+                "value": {
+                  "error": {
+                    "code": "AUTH_MISSING",
+                    "message": "Missing API key. Pass X-API-Key or Authorization: Bearer <key>."
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
+              },
+              "Invalid": {
+                "summary": "Key is revoked, unknown, or malformed",
+                "value": {
+                  "error": {
+                    "code": "AUTH_INVALID",
+                    "message": "API key is invalid"
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
               }
             }
           }
-        ]
+        }
       },
-      "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
+      "ValidationError": {
+        "description": "One of the request parameters failed validation.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "InvalidTimestamp": {
+                "summary": "Unparseable timestamp",
+                "value": {
+                  "error": {
+                    "code": "INVALID_TIMESTAMP",
+                    "message": "Invalid start_time: expected millisecond epoch or ISO-8601",
+                    "details": { "value": "last-tuesday", "field": "start_time" }
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
+              },
+              "InvalidCursor": {
+                "summary": "Cursor is unreadable",
+                "value": {
+                  "error": {
+                    "code": "INVALID_CURSOR",
+                    "message": "Cursor is malformed or unreadable"
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
+              },
+              "InvalidType": {
+                "summary": "Unknown (coin, type) pair",
+                "value": {
+                  "error": {
+                    "code": "INVALID_TYPE",
+                    "message": "No data deployment for BTC at type 1h",
+                    "details": {
+                      "coin": "btc",
+                      "type": "1h",
+                      "available": ["btc:15m", "doge:15m", "eth:15m", "sol:15m", "xrp:15m"]
+                    }
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "RateLimitError": {
+        "description": "Rate limit exceeded. `Retry-After` header gives wait time in seconds.",
+        "headers": {
+          "Retry-After": {
+            "description": "Seconds to wait before retrying.",
+            "schema": { "type": "integer" }
           },
-          "message": {
-            "type": "string"
+          "X-RateLimit-Limit": {
+            "description": "The tightest active rate limit.",
+            "schema": { "type": "integer" }
+          },
+          "X-RateLimit-Remaining": {
+            "description": "Slots remaining against the active limit.",
+            "schema": { "type": "integer" }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "examples": {
+              "Burst": {
+                "summary": "Per-second burst exceeded",
+                "value": {
+                  "error": {
+                    "code": "RATE_LIMIT_BURST",
+                    "message": "RATE_LIMIT_BURST: limit 10 per second",
+                    "details": { "retry_after": 1, "limit": 10, "window": "second" }
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
+              },
+              "Sustained": {
+                "summary": "Per-minute sustained limit exceeded",
+                "value": {
+                  "error": {
+                    "code": "RATE_LIMIT_SUSTAINED",
+                    "message": "RATE_LIMIT_SUSTAINED: limit 300 per minute",
+                    "details": { "retry_after": 47, "limit": 300, "window": "minute" }
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
+    "schemas": {
+      "ResponseMeta": {
+        "type": "object",
+        "description": "Tracing / diagnostics block attached to every response.",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "Unique server-side id for this request. Include when reporting issues.",
+            "example": "req_a1b2c3d4e5f6"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Server wall-clock at response time (UTC).",
+            "example": "2026-04-24T18:00:00Z"
+          }
+        },
+        "required": ["request_id", "timestamp"]
+      },
+      "Pagination": {
+        "type": "object",
+        "description": "Keyset pagination metadata for list endpoints.",
+        "properties": {
+          "next_cursor": {
+            "type": ["string", "null"],
+            "description": "Pass to `?cursor=` on the next request. `null` when there are no more pages.",
+            "example": "eyJjdCI6IjIwMjYtMDQtMjJUMTg6MzA6MDBaIiwidGsiOiJLWEJUQzE1TS0yNkFQUjIyMTgzMC1UMTA1MDAwIn0"
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "`true` when another page exists.",
+            "example": true
+          },
+          "limit": {
+            "type": "integer",
+            "description": "The effective page size applied to this response.",
+            "example": 50
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of items actually returned in `data`.",
+            "example": 50
+          },
+          "total_count": {
+            "type": ["integer", "null"],
+            "description": "Total row count matching the filter. Only populated when `?include_count=true` was passed.",
+            "example": null
+          }
+        },
+        "required": ["has_more", "limit", "count"]
+      },
+      "ErrorBlock": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Stable machine-readable error code. Branch on this, not on `message`.",
+            "example": "RATE_LIMIT_BURST"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable summary. Safe to log; not safe to pattern-match.",
+            "example": "RATE_LIMIT_BURST: limit 10 per second"
+          },
+          "details": {
+            "type": ["object", "null"],
+            "description": "Extra context that varies by `code` (e.g. retry hints, offending field).",
+            "additionalProperties": true
+          }
+        },
+        "required": ["code", "message"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": { "$ref": "#/components/schemas/ErrorBlock" },
+          "meta": { "$ref": "#/components/schemas/ResponseMeta" }
+        },
+        "required": ["error", "meta"]
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["ok", "degraded"],
+                "example": "ok"
+              },
+              "pools": {
+                "type": "object",
+                "description": "Connectivity state of every configured pool (`coin:type` plus `auth`).",
+                "additionalProperties": { "type": "boolean" },
+                "example": {
+                  "btc:15m": true,
+                  "eth:15m": true,
+                  "auth": true
+                }
+              },
+              "markets": {
+                "type": "array",
+                "description": "Enabled Kalshi deployments.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "coin": { "type": "string", "example": "btc" },
+                    "type": { "type": "string", "example": "15m" }
+                  }
+                }
+              }
+            }
+          },
+          "meta": { "$ref": "#/components/schemas/ResponseMeta" }
+        }
+      },
+      "Market": {
+        "type": "object",
+        "description": "Everything static + resolved about a single Kalshi up/down market.",
+        "properties": {
+          "market_ticker": {
+            "type": "string",
+            "description": "Primary key. Kalshi's stable identifier for this market.",
+            "example": "KXBTC15M-26APR221830-T105000"
+          },
+          "event_ticker": {
+            "type": "string",
+            "description": "The Kalshi event this market belongs to.",
+            "example": "KXBTC15M-26APR221830"
+          },
+          "series_ticker": {
+            "type": "string",
+            "description": "The Kalshi series this market belongs to.",
+            "example": "KXBTC15M"
+          },
+          "title": {
+            "type": ["string", "null"],
+            "example": "Bitcoin above $105,000 at 18:30?"
+          },
+          "subtitle": {
+            "type": ["string", "null"],
+            "example": "15-minute market"
+          },
+          "rules_primary": {
+            "type": ["string", "null"],
+            "description": "Kalshi's primary resolution rules text.",
+            "example": "If the final BTC price is strictly greater than $105,000 at 18:30 ET, this market resolves YES."
+          },
+          "strike_type": {
+            "type": ["string", "null"],
+            "description": "`greater` / `less` / `between` / `custom` — how the strike is evaluated.",
+            "example": "greater"
+          },
+          "floor_strike": {
+            "type": ["number", "null"],
+            "description": "YES threshold for up-style markets (null if not applicable).",
+            "example": 105000.0
+          },
+          "cap_strike": {
+            "type": ["number", "null"],
+            "description": "YES threshold for down-style markets (null if not applicable).",
+            "example": null
+          },
+          "open_time": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "example": "2026-04-22T18:15:00Z"
+          },
+          "close_time": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "example": "2026-04-22T18:30:00Z"
+          },
+          "expiration_time": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "example": "2026-04-22T18:30:00Z"
+          },
+          "coin_price_start": {
+            "type": ["number", "null"],
+            "description": "Underlying coin price captured at `open_time`.",
+            "example": 104872.12
+          },
+          "coin_price_end": {
+            "type": ["number", "null"],
+            "description": "Underlying coin price captured at `close_time`.",
+            "example": 105224.45
+          },
+          "expiration_value": {
+            "type": ["number", "null"],
+            "description": "Settlement value Kalshi used to resolve the market.",
+            "example": 105224.45
+          },
+          "result": {
+            "type": ["string", "null"],
+            "enum": ["yes", "no", "scalar", null],
+            "description": "`null` until the market settles.",
+            "example": "yes"
+          },
+          "settlement_ts": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "example": "2026-04-22T18:30:12Z"
+          },
+          "status": {
+            "type": ["string", "null"],
+            "description": "`open` | `closed` | `settled` | `initialized`.",
+            "example": "settled"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-22T18:14:58Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-04-22T18:30:12Z"
+          }
+        }
+      },
+      "MarketsPageResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Market" } },
+          "pagination": { "$ref": "#/components/schemas/Pagination" },
+          "meta": { "$ref": "#/components/schemas/ResponseMeta" }
+        }
+      },
+      "MarketResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "$ref": "#/components/schemas/Market" },
+          "meta": { "$ref": "#/components/schemas/ResponseMeta" }
+        }
+      },
+      "OrderbookSide": {
+        "type": "object",
+        "description": "A single side of the Kalshi orderbook (YES or NO).",
+        "properties": {
+          "bids": {
+            "type": "array",
+            "description": "Top-15 `[price, qty]` pairs. Price is 0–100 cents (integer) per Kalshi's native format; qty is number of contracts.",
+            "items": {
+              "type": "array",
+              "items": { "type": "number" },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "example": [[42, 150], [41, 320], [40, 500]]
+          }
+        }
+      },
+      "Snapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Monotonic row id used with `time` to build cursors.",
+            "example": 1298374
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Wall-clock time of the snapshot.",
+            "example": "2026-04-22T18:15:03.214Z"
+          },
+          "market_ticker": {
+            "type": "string",
+            "example": "KXBTC15M-26APR221830-T105000"
+          },
+          "yes_best_bid": {
+            "type": ["number", "null"],
+            "description": "Top-of-book YES bid (0.00 – 1.00).",
+            "example": 0.42
+          },
+          "no_best_bid": {
+            "type": ["number", "null"],
+            "description": "Top-of-book NO bid (0.00 – 1.00).",
+            "example": 0.57
+          },
+          "coin_price": {
+            "type": ["number", "null"],
+            "description": "Underlying coin price at `time`.",
+            "example": 104872.45
+          },
+          "seq": {
+            "type": ["integer", "null"],
+            "description": "Kalshi `orderbook_delta` sequence number for reconstructing diffs.",
+            "example": 8871
+          },
+          "orderbook_yes": { "$ref": "#/components/schemas/OrderbookSide" },
+          "orderbook_no": { "$ref": "#/components/schemas/OrderbookSide" },
+          "gap_ms": {
+            "type": ["integer", "null"],
+            "description": "Only present on `snapshots/at`. Milliseconds between the requested timestamp and the returned snapshot's `time`.",
+            "example": 186
+          }
+        }
+      },
+      "SnapshotsPageResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Snapshot" } },
+          "pagination": { "$ref": "#/components/schemas/Pagination" },
+          "meta": { "$ref": "#/components/schemas/ResponseMeta" }
+        }
+      },
+      "SnapshotResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "$ref": "#/components/schemas/Snapshot" },
+          "meta": { "$ref": "#/components/schemas/ResponseMeta" }
+        }
       }
     }
   }

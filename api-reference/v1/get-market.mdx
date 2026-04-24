@@ -1,0 +1,20 @@
+---
+title: 'Get Market by Ticker'
+openapi: 'GET /v1/{coin}/{type}/markets/{ticker}'
+---
+
+## What you get
+
+A single market keyed by its Kalshi `market_ticker` — the native stable
+id (e.g. `KXBTC15M-26APR221830-T105000`). Use this instead of slug-style
+identifiers; Kalshi's tickers are stable across series, events, and
+settlement.
+
+<Tip>
+Tickers are the identifier you should build external links around —
+they outlive any URL-slug choices we might make on kalshibacktest.com.
+</Tip>
+
+<Info>
+Unknown tickers return `404` with `error.code = MARKET_NOT_FOUND`.
+</Info>

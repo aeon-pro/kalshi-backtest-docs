@@ -1,0 +1,21 @@
+---
+title: 'Snapshot at Timestamp'
+openapi: 'GET /v1/{coin}/{type}/markets/{ticker}/snapshots/at/{timestamp}'
+---
+
+## What you get
+
+The snapshot whose `time` is closest to `{timestamp}` — passed as either
+a millisecond epoch or an ISO-8601 string. The response includes a
+`gap_ms` field so you can tell how stale the match is.
+
+If no snapshot falls within `tolerance_ms` of the requested time, the
+response is `404` with `error.code = SNAPSHOT_NOT_FOUND` and
+`details.nearest_gap_ms` for diagnosis.
+
+<Tip>
+Use this to line a backtest decision up to a wall-clock moment without
+scanning the whole snapshot window. Snapshots are recorded at ~100 ms
+cadence, so the default `tolerance_ms=2000` is almost always the right
+value.
+</Tip>

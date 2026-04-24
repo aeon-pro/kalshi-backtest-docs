@@ -1,0 +1,30 @@
+---
+title: 'List Market Snapshots'
+openapi: 'GET /v1/{coin}/{type}/markets/{ticker}/snapshots'
+---
+
+## What you get
+
+~100 ms orderbook snapshots for a single market, ordered `time ASC, id
+ASC` so the response reads as a forward replay.
+
+## Snapshot payload
+
+- `time` — wall-clock timestamp (UTC).
+- `yes_best_bid`, `no_best_bid` — top-of-book prices (0.00 – 1.00).
+- `coin_price` — underlying coin price at capture time.
+- `seq` — Kalshi `orderbook_delta` sequence number.
+- `orderbook_yes`, `orderbook_no` — top-15 YES / NO ladders as
+  `{"bids": [[price, qty], ...]}`. Only returned when
+  `?include_orderbook=true`.
+
+## Pagination
+
+Snapshots are returned **ascending** by time. Pass
+`pagination.next_cursor` forward and stop on `has_more === false`.
+
+<Warning>
+`include_orderbook=true` at high `limit` returns much larger payloads —
+a full 1,000-row page with depth can exceed 1 MB. Keep `limit` modest
+or paginate in smaller pages if bandwidth matters.
+</Warning>

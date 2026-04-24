@@ -1,33 +1,44 @@
 ---
 title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+description: 'REST API over every Kalshi up/down crypto market we capture.'
 ---
-
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
 
 ## Welcome
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+The KalshiBackTest v1 API exposes two resource families for each
+(coin × type) deployment:
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+1. **Markets** — stable metadata keyed by `market_ticker`.
+2. **Snapshots** — sub-second orderbook + coin-price captures.
+
+That's it. No batch endpoint, no price feed endpoints, no discovery
+endpoint — the v1 surface is deliberately narrow so the contract is
+easy to hold in your head.
+
+## Base URL
+
+```
+https://api.kalshibacktest.com
+```
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
-
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+```http
+x-api-key: kbt_...
 ```
+*OR*
+```http
+Authorization: Bearer kbt_...
+```
+
+See [Authorization](/api-reference/authorization) for details.
+
+## Where to start
+
+- Start with the [v1 Overview](/api-reference/v1/overview) for envelope + pagination rules.
+- Skim the [Error Codes](/api-reference/v1/error-codes) so your client
+  knows how to branch.
+- Jump into a concrete endpoint:
+  - [List Markets](/api-reference/v1/list-markets)
+  - [List Snapshots](/api-reference/v1/list-snapshots)
+  - [Snapshot at Timestamp](/api-reference/v1/snapshot-at)

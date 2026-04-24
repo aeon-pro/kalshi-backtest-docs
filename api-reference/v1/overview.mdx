@@ -1,0 +1,102 @@
+---
+title: 'v1 Overview'
+description: 'Coin-and-type-in-path URLs, cursor pagination, and a consistent JSON envelope.'
+---
+
+Every endpoint on the Kalshi Public Data API lives under `/v1/`. The
+surface area is deliberately small — list markets, get a market, list
+snapshots, snapshot at timestamp. That's it.
+
+## Design
+
+| | Kalshi v1 |
+|---|---|
+| **Coin + type** | Path segments: `/v1/{coin}/{type}/...` |
+| **Pagination** | `limit` + `cursor` (keyset/seek) |
+| **Total count** | Opt-in via `?include_count=true` |
+| **Response shape** | Uniform `{ data, pagination?, meta }` envelope |
+| **Errors** | `{ "error": { "code", "message", "details" }, "meta" }` |
+
+## Base URL
+
+- **`https://api.kalshibacktest.com`** — everyone
+
+## Response envelope
+
+### Single resource
+
+```json
+{
+  "data": { "market_ticker": "KXBTC15M-26APR221830-T105000", "...": "..." },
+  "meta": {
+    "request_id": "req_a1b2c3d4e5f6",
+    "timestamp": "2026-04-24T18:00:00Z"
+  }
+}
+```
+
+### Paginated list
+
+```json
+{
+  "data": [ { "market_ticker": "KXBTC15M-26APR221830-T105000", "...": "..." } ],
+  "pagination": {
+    "next_cursor": "eyJjdCI6IjIwMjYtMDQtMjRUMTg6MDA6MDBaIiwidGsiOiJLWEJUQzE1TS0yNkFQUjIyMTgzMC1UMTA1MDAwIn0",
+    "has_more": true,
+    "limit": 50,
+    "count": 50
+  },
+  "meta": { "request_id": "req_...", "timestamp": "2026-04-24T18:00:00Z" }
+}
+```
+
+`pagination.total_count` is **omitted by default**. To opt in (at the cost of a `COUNT(*)`), pass `?include_count=true`.
+
+### Error
+
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_BURST",
+    "message": "RATE_LIMIT_BURST: limit 10 per second",
+    "details": { "retry_after": 1, "limit": 10, "window": "second" }
+  },
+  "meta": { "request_id": "req_...", "timestamp": "2026-04-24T18:00:00Z" }
+}
+```
+
+The HTTP status is set per the error `code` (see [Error Codes](/api-reference/v1/error-codes)).
+
+## Cursor pagination
+
+Cursors are opaque base64url-encoded JSON snapshots of the last row's sort keys. To paginate forward, take `pagination.next_cursor` from one response and pass it as `?cursor=` in the next request:
+
+```bash
+# Page 1
+curl 'https://api.kalshibacktest.com/v1/btc/15m/markets?limit=50' \
+  -H "X-API-Key: $KBT_KEY"
+
+# Page 2 — pass the cursor from page 1
+curl 'https://api.kalshibacktest.com/v1/btc/15m/markets?limit=50&cursor=eyJjdCI...' \
+  -H "X-API-Key: $KBT_KEY"
+```
+
+Stop when `pagination.has_more === false`.
+
+<Note>
+Cursor pagination stays O(1) at any depth and uses the same Postgres
+indexes the rest of the service relies on. Keep sending the cursor
+forward — don't bounce back to offset.
+</Note>
+
+## Authentication
+
+```bash
+curl 'https://api.kalshibacktest.com/v1/btc/15m/markets' \
+  -H "X-API-Key: $KBT_KEY"
+# or
+curl 'https://api.kalshibacktest.com/v1/btc/15m/markets' \
+  -H "Authorization: Bearer $KBT_KEY"
+```
+
+See [API Keys](/api-keys) for key issuance + rotation.

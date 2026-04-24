@@ -1,0 +1,62 @@
+---
+title: 'Rate Limits'
+description: 'Per-second and per-minute caps on the free plan.'
+icon: 'gauge-high'
+---
+
+## Rate limits
+
+Rate limits are per API key and enforced in Redis with a per-second
+burst bucket and a per-minute sustained bucket.
+
+### Free plan (everyone)
+
+| Requests / second | Requests / minute |
+| :--- | :--- |
+| **10** | **300** |
+
+<Info>
+v1 ships a single `free` plan with everything available: all five
+`(coin × type)` deployments, no history cap, no blocked endpoints.
+Only the rate limits apply.
+</Info>
+
+### Rate limit headers
+
+Every authenticated response carries:
+
+- `X-RateLimit-Limit` — the tightest active cap (per second or per minute, whichever you were closer to).
+- `X-RateLimit-Remaining` — how many slots you have left against that cap.
+- `Retry-After` — only on `429` responses; seconds to wait.
+
+### 429 responses
+
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_BURST",
+    "message": "RATE_LIMIT_BURST: limit 10 per second",
+    "details": { "retry_after": 1, "limit": 10, "window": "second" }
+  },
+  "meta": { "request_id": "req_a1b2c3d4e5f6", "timestamp": "2026-04-24T18:00:00Z" }
+}
+```
+
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_SUSTAINED",
+    "message": "RATE_LIMIT_SUSTAINED: limit 300 per minute",
+    "details": { "retry_after": 47, "limit": 300, "window": "minute" }
+  },
+  "meta": { "request_id": "req_...", "timestamp": "2026-04-24T18:00:00Z" }
+}
+```
+
+Branch on `error.code`, not `error.message`.
+
+<Tip>
+When you see `RATE_LIMIT_BURST`, back off for `details.retry_after`
+seconds (always `1`) before retrying. For `RATE_LIMIT_SUSTAINED`, the
+value is whatever's left of the current minute.
+</Tip>

@@ -1,97 +1,81 @@
 ---
 title: "Introduction"
-description: "Welcome to the new home for your documentation"
+description: "Backtest-grade access to Kalshi up/down crypto markets — tickers and full-depth snapshots."
 ---
 
-## Setting up
+## Welcome to KalshiBackTest
 
-Get your documentation site up and running in minutes.
+KalshiBackTest gives quants, systematic traders, and researchers a
+stable, read-only API over every Kalshi up/down crypto market we
+capture. Each supported (coin × type) deployment streams full orderbook
+snapshots ~100 ms apart from market open through settlement, so you can
+replay any market tick-by-tick.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
+## What you can build
 
 <Columns cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="Backtesting Systems"
+    icon="clock-rotate-left"
+    href="/api-reference/v1/list-snapshots"
   >
-    Edit your docs locally and preview them in real time.
+    Replay every snapshot from open to settlement with sub-second precision.
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="Live Strategies"
+    icon="robot"
+    href="/api-reference/v1/list-markets"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    Poll top-of-book YES/NO prices and follow markets as they resolve.
   </Card>
   <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
+    title="Settlement Research"
+    icon="magnifying-glass-chart"
+    href="/api-reference/v1/get-market"
   >
-    Auto-generate API documentation from OpenAPI specifications.
+    Audit Kalshi's `expiration_value` against the coin price recorded at close.
+  </Card>
+  <Card
+    title="Market Analytics"
+    icon="chart-line"
+    href="/api-reference/v1/list-markets"
+  >
+    Study yes/no probabilities, strike distributions, and resolution outcomes.
   </Card>
 </Columns>
 
-## Create beautiful pages
+## Quick examples
 
-Everything you need to create world-class documentation.
+List the most recent BTC 15m markets:
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+```bash
+curl "https://api.kalshibacktest.com/v1/btc/15m/markets?limit=10" \
+  -H "Authorization: Bearer kbt_your_api_key_here"
+```
 
-## Need inspiration?
+Pull full-depth snapshots for one market:
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+```bash
+curl "https://api.kalshibacktest.com/v1/btc/15m/markets/KXBTC15M-26APR221830-T105000/snapshots?include_orderbook=true&limit=500" \
+  -H "X-API-Key: kbt_your_api_key_here"
+```
+
+Grab the exact snapshot at a moment in time:
+
+```bash
+curl "https://api.kalshibacktest.com/v1/btc/15m/markets/KXBTC15M-26APR221830-T105000/snapshots/at/2026-04-22T18:20:00Z" \
+  -H "X-API-Key: kbt_your_api_key_here"
+```
+
+<Info>
+v1 puts the coin **and** the market type in the URL path
+(`/v1/{coin}/{type}/...`). One Kalshi Workers Postgres deployment
+backs each (coin, type) pair. Today we ship five deployments —
+`btc`, `eth`, `sol`, `doge`, `xrp`, all at `15m`.
+</Info>
+
+<Note>
+Every response uses the v1 envelope — `{ data, pagination?, meta }` for
+success, `{ error, meta }` for errors. See the [v1 Overview](/api-reference/v1/overview)
+for the full contract.
+</Note>

@@ -1,0 +1,19 @@
+---
+title: "Authorization"
+description: "How to authenticate your KalshiBackTest API requests."
+---
+
+All requests must be authenticated with your API Key. You can use either of the following headers:
+
+```http
+x-api-key: kbt_...
+```
+*OR*
+```http
+Authorization: Bearer kbt_...
+```
+
+Keys are issued and managed from the [Dashboard](https://kalshibacktest.com/dashboard).
+See [API Keys](/api-keys) for generation + rotation steps and
+[v1 Error Codes](/api-reference/v1/error-codes) for every auth-related
+error the API can return.

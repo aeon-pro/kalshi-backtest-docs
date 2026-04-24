@@ -1,0 +1,62 @@
+---
+title: 'Error Codes'
+description: 'Stable, machine-readable error codes returned by every v1 endpoint.'
+---
+
+Every v1 error follows the same shape:
+
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_BURST",
+    "message": "RATE_LIMIT_BURST: limit 10 per second",
+    "details": { "retry_after": 1, "limit": 10, "window": "second" }
+  },
+  "meta": { "request_id": "req_a1b2c3d4e5f6", "timestamp": "2026-04-24T18:00:00Z" }
+}
+```
+
+Branch on `error.code`, not on `error.message` (messages may evolve).
+
+## Authentication (401)
+
+| Code | When |
+|---|---|
+| `AUTH_MISSING` | No API key was provided. |
+| `AUTH_INVALID` | The key is unknown, revoked, or malformed. |
+| `AUTH_EXPIRED` | The key is past its expiration date. |
+
+## Rate limiting (429)
+
+| Code | When |
+|---|---|
+| `RATE_LIMIT_BURST` | Per-second burst limit exceeded. `details.retry_after` tells you when to retry. |
+| `RATE_LIMIT_SUSTAINED` | Per-minute sustained limit exceeded. |
+
+429 responses also carry a `Retry-After` header.
+
+## Validation (400)
+
+| Code | When |
+|---|---|
+| `INVALID_COIN` | Coin path segment is not one of the configured coins. |
+| `INVALID_TYPE` | No data deployment exists for this `(coin, type)`. |
+| `INVALID_PARAMETER` | A query parameter has an invalid value (`details.field` names the field). |
+| `INVALID_CURSOR` | The cursor is malformed or unreadable. |
+| `INVALID_TIMESTAMP` | Timestamp can't be parsed (must be ms epoch or ISO-8601). |
+
+## Not found (404)
+
+| Code | When |
+|---|---|
+| `MARKET_NOT_FOUND` | No market with the given `market_ticker`. |
+| `SNAPSHOT_NOT_FOUND` | No snapshot within `tolerance_ms` of the requested timestamp. |
+| `ENDPOINT_NOT_FOUND` | The path doesn't match any v1 route. |
+
+## Server (5xx)
+
+| Code | When |
+|---|---|
+| `INTERNAL_ERROR` | Unexpected server error (HTTP 500). |
+| `UPSTREAM_UNAVAILABLE` | A backend service is unreachable (HTTP 502). |
+| `DATABASE_UNAVAILABLE` | Database connection failed (HTTP 503). |

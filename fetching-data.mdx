@@ -1,0 +1,86 @@
+---
+title: 'Fetching data'
+description: 'Pagination, timestamps, cursors, and the v1 envelope.'
+icon: 'download'
+---
+
+## Envelope
+
+Every successful response is one of:
+
+```json
+{ "data": { ... }, "meta": { "request_id": "req_...", "timestamp": "..." } }
+```
+
+```json
+{
+  "data": [ ... ],
+  "pagination": {
+    "next_cursor": "eyJj...",
+    "has_more": true,
+    "limit": 100,
+    "count": 100,
+    "total_count": null
+  },
+  "meta": { "request_id": "req_...", "timestamp": "..." }
+}
+```
+
+Errors use the shared `{ error: { code, message, details? }, meta }` shape.
+
+## Cursor pagination
+
+Lists return `pagination.next_cursor` when more data is available. Pass
+it back as `?cursor=...` on the next request:
+
+```bash
+# Page 1
+curl "https://api.kalshibacktest.com/v1/btc/15m/markets/KXBTC15M-26APR221830-T105000/snapshots?limit=500" \
+  -H "X-API-Key: $KBT_KEY"
+
+# Page 2 — take next_cursor from page 1's pagination
+curl "https://api.kalshibacktest.com/v1/btc/15m/markets/KXBTC15M-26APR221830-T105000/snapshots?limit=500&cursor=eyJjIjoi..." \
+  -H "X-API-Key: $KBT_KEY"
+```
+
+Stop paginating when `pagination.has_more === false`.
+
+Cursors encode the last row's sort key as base64url JSON. Compared to
+`OFFSET N`, they stay O(1) at any depth and re-use the same Postgres
+indexes the rest of the service relies on.
+
+<Warning>
+Cursors are opaque. Treat them as an ASCII-safe string — do not parse,
+regex, or persist them across schema upgrades.
+</Warning>
+
+## Timestamps
+
+Every `timestamp`-shaped parameter accepts either:
+
+- **Millisecond epoch** — e.g. `1745520000000`.
+- **ISO-8601** — e.g. `2026-04-24T18:00:00Z` or `2026-04-24T18:00:00+00:00`.
+
+Unparseable values return `400` with `INVALID_TIMESTAMP` and the offending field in `details.field`.
+
+## Sort order
+
+| Endpoint | Order |
+| :--- | :--- |
+| List markets     | `close_time DESC, market_ticker DESC` |
+| List snapshots   | `time ASC, id ASC` |
+
+Snapshots are returned oldest-first so you can consume them as a forward
+replay. Markets are returned newest-first because the most interesting
+market is almost always the next one to expire.
+
+## Include total counts
+
+`COUNT(*)` is the single most expensive query available, so
+`pagination.total_count` is **omitted by default**. Pass
+`?include_count=true` only when you actually need it:
+
+```bash
+curl "https://api.kalshibacktest.com/v1/btc/15m/markets?include_count=true&limit=1" \
+  -H "X-API-Key: $KBT_KEY"
+```

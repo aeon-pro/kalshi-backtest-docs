@@ -1,0 +1,75 @@
+---
+title: 'API Keys'
+description: 'How to generate and use API keys'
+icon: 'key'
+---
+
+## Overview
+
+KalshiBackTest authenticates every data request with an API key. Keys are
+issued and revoked from the [Dashboard](https://kalshibacktest.com/dashboard)
+and are stored on our side only as SHA-256 hashes, so you are responsible
+for the raw value after creation.
+
+Keep your keys secret. Do not commit them to Git, ship them in a browser
+bundle, or paste them into a public support channel.
+
+## Generate an API Key
+
+1. Log in to your [KalshiBackTest account](https://kalshibacktest.com/login).
+2. Navigate to the [Dashboard](https://kalshibacktest.com/dashboard).
+3. Select the **API Keys** tab.
+4. Click **Create New Key**, name it (e.g. "Backtest Worker"), and
+   optionally set an expiration.
+5. **Copy the key immediately** — it is only shown once.
+
+<Note>
+Lost keys cannot be recovered. Revoke + re-issue instead.
+</Note>
+
+## Using the API Key
+
+Pass the key on every request. Either header works — pick one:
+
+```bash
+# Authorization: Bearer (recommended)
+curl "https://api.kalshibacktest.com/v1/btc/15m/markets" \
+  -H "Authorization: Bearer kbt_your_api_key_here"
+
+# X-API-Key
+curl "https://api.kalshibacktest.com/v1/btc/15m/markets" \
+  -H "X-API-Key: kbt_your_api_key_here"
+```
+
+<Info>
+v1 puts both the coin **and** the market type in the URL path
+(`/v1/{coin}/{type}/...`). Each (coin, type) pair is served by its own
+Postgres, so the path is also the routing key.
+</Info>
+
+### Base URL
+
+| Domain | Who can use it |
+| :--- | :--- |
+| `api.kalshibacktest.com` | Everyone |
+
+### Authentication errors
+
+v1 errors surface a stable machine-readable `code` (full list on
+[v1 Error Codes](/api-reference/v1/error-codes)):
+
+| `error.code` | Status | When |
+| :--- | :--- | :--- |
+| `AUTH_MISSING` | `401` | No API key was provided. |
+| `AUTH_INVALID` | `401` | The key is unknown, revoked, or malformed. |
+| `AUTH_EXPIRED` | `401` | The key is past its expiration date. |
+
+## Best practices
+
+- **Use distinct keys** for dev, staging, and production so one leak
+  doesn't take down everything.
+- **Set expirations** on sensitive keys and rotate on a schedule.
+- **Revoke unused keys** from the dashboard as soon as they are no
+  longer in use.
+- **Scope by plan**, not by key — all of a user's keys share the same
+  plan limits.

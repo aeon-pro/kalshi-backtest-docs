@@ -1,0 +1,28 @@
+---
+title: 'List Markets'
+openapi: 'GET /v1/{coin}/{type}/markets'
+---
+
+## What you get
+
+Cursor-paginated markets for a single Kalshi Workers deployment
+(`{coin}` × `{type}`), newest close first.
+
+## Sort order
+
+`close_time DESC, market_ticker DESC`. The cursor encodes the last
+returned `(close_time, market_ticker)` so subsequent pages resume using
+a tuple comparison — O(1) at any depth.
+
+## Pagination
+
+Pass `pagination.next_cursor` from one response as `?cursor=` on the
+next. Stop when `pagination.has_more === false`. `total_count` is only
+included when you pass `?include_count=true` (it runs a `COUNT(*)`).
+
+<Info>
+v1 ships a single `free` plan with everything open — all five
+deployments (`btc:15m`, `eth:15m`, `sol:15m`, `doge:15m`, `xrp:15m`),
+no history cap. Rate limits still apply: see
+[Rate Limits](/rate-limits).
+</Info>

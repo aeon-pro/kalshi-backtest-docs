@@ -1,0 +1,13 @@
+---
+title: 'Health Check'
+openapi: 'GET /v1/health'
+---
+
+Public health check — no API key required. Returns `ok` when every
+configured pool (including the auth DB) is reachable, `degraded`
+otherwise.
+
+<Info>
+Safe to use as a load-balancer or uptime probe. This endpoint does not
+consume a rate-limit slot.
+</Info>
