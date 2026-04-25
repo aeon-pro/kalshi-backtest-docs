@@ -4,6 +4,10 @@ description: 'Supported coins, types, and snapshot payload contents.'
 icon: 'chart-pie'
 ---
 
+import CoverageBeta from '/snippets/coverage-beta.mdx';
+
+<CoverageBeta />
+
 ## Kalshi up/down crypto markets
 
 Each supported (coin × type) pair is a dedicated Kalshi Workers stack
@@ -43,7 +47,7 @@ A market row summarises everything static + resolved about a contract:
 
 - `market_ticker` (primary key), `event_ticker`, `series_ticker`
 - `title`, `subtitle`, `rules_primary`
-- `strike_type`, `floor_strike`, `cap_strike`
+- `strike_type`, `floor_strike`
 - `open_time`, `close_time`, `expiration_time`
 - `coin_price_start`, `coin_price_end` — snapshots at open + close
 - `expiration_value`, `result`, `settlement_ts` — the resolved outcome

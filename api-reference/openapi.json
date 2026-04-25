@@ -165,7 +165,6 @@
                       "rules_primary": "If the final BTC price is strictly greater than $105,000 at 18:30 ET, this market resolves YES.",
                       "strike_type": "greater",
                       "floor_strike": 105000.0,
-                      "cap_strike": null,
                       "open_time": "2026-04-22T18:15:00Z",
                       "close_time": "2026-04-22T18:30:00Z",
                       "expiration_time": "2026-04-22T18:30:00Z",
@@ -227,7 +226,6 @@
                     "rules_primary": "If the final BTC price is strictly greater than $105,000 at 18:30 ET, this market resolves YES.",
                     "strike_type": "greater",
                     "floor_strike": 105000.0,
-                    "cap_strike": null,
                     "open_time": "2026-04-22T18:15:00Z",
                     "close_time": "2026-04-22T18:30:00Z",
                     "expiration_time": "2026-04-22T18:30:00Z",
@@ -858,11 +856,6 @@
             "type": ["number", "null"],
             "description": "YES threshold for up-style markets (null if not applicable).",
             "example": 105000.0
-          },
-          "cap_strike": {
-            "type": ["number", "null"],
-            "description": "YES threshold for down-style markets (null if not applicable).",
-            "example": null
           },
           "open_time": {
             "type": ["string", "null"],
