@@ -275,7 +275,7 @@
         "tags": ["Kalshi Markets"],
         "summary": "List Market Snapshots",
         "operationId": "listSnapshots",
-        "description": "Cursor-paginated ~100 ms snapshots of a single market, ordered `time ASC, id ASC` so the response reads as a forward replay.\n\nPass `include_orderbook=true` to receive full top-15 YES/NO ladders as `{\"bids\": [[price, qty], ...]}`. Large pages with orderbook depth can exceed 1 MB.",
+        "description": "Returns the market's metadata together with a cursor-paginated forward replay of ~100 ms snapshots (oldest-first) inside `data.snapshots[]`. Embedding the market means a single round-trip is enough to start scoring against snapshots — no separate `Get Market` call needed.\n\nPass `include_orderbook=true` to receive full top-15 YES/NO ladders as `{\"bids\": [[price, qty], ...]}` on each snapshot. Large pages with orderbook depth can exceed 1 MB.",
         "parameters": [
           { "$ref": "#/components/parameters/Coin" },
           { "$ref": "#/components/parameters/Type" },
@@ -336,26 +336,47 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/SnapshotsPageResponse" },
                 "example": {
-                  "data": [
-                    {
-                      "id": 1298374,
-                      "time": "2026-04-22T18:15:03.214Z",
-                      "market_ticker": "KXBTC15M-26APR221830-T105000",
-                      "yes_best_bid": 0.42,
-                      "no_best_bid": 0.57,
-                      "coin_price": 104872.45,
-                      "seq": 8871
-                    },
-                    {
-                      "id": 1298375,
-                      "time": "2026-04-22T18:15:03.317Z",
-                      "market_ticker": "KXBTC15M-26APR221830-T105000",
-                      "yes_best_bid": 0.43,
-                      "no_best_bid": 0.56,
-                      "coin_price": 104875.10,
-                      "seq": 8872
-                    }
-                  ],
+                  "data": {
+                    "market_ticker": "KXBTC15M-26APR221830-T105000",
+                    "event_ticker": "KXBTC15M-26APR221830",
+                    "series_ticker": "KXBTC15M",
+                    "title": "Bitcoin above $105,000 at 18:30?",
+                    "subtitle": "15-minute market",
+                    "rules_primary": "If the final BTC price is strictly greater than $105,000 at 18:30 ET, this market resolves YES.",
+                    "strike_type": "greater",
+                    "floor_strike": 105000.0,
+                    "open_time": "2026-04-22T18:15:00Z",
+                    "close_time": "2026-04-22T18:30:00Z",
+                    "expiration_time": "2026-04-22T18:30:00Z",
+                    "coin_price_start": 104872.12,
+                    "coin_price_end": 105224.45,
+                    "expiration_value": 105224.45,
+                    "result": "yes",
+                    "settlement_ts": "2026-04-22T18:30:12Z",
+                    "status": "finalized",
+                    "created_at": "2026-04-22T18:14:58Z",
+                    "updated_at": "2026-04-22T18:30:12Z",
+                    "snapshots": [
+                      {
+                        "id": 1298374,
+                        "time": "2026-04-22T18:15:03.214Z",
+                        "market_ticker": "KXBTC15M-26APR221830-T105000",
+                        "yes_best_bid": 0.42,
+                        "no_best_bid": 0.57,
+                        "coin_price": 104872.45,
+                        "seq": 8871
+                      },
+                      {
+                        "id": 1298375,
+                        "time": "2026-04-22T18:15:03.317Z",
+                        "market_ticker": "KXBTC15M-26APR221830-T105000",
+                        "yes_best_bid": 0.43,
+                        "no_best_bid": 0.56,
+                        "coin_price": 104875.10,
+                        "seq": 8872
+                      }
+                    ]
+                  },
                   "pagination": {
                     "next_cursor": "eyJ0cyI6IjIwMjYtMDQtMjJUMTg6MTU6MDMuMzE3WiIsImlkIjoxMjk4Mzc1fQ",
                     "has_more": true,
@@ -401,7 +422,7 @@
         "tags": ["Kalshi Markets"],
         "summary": "Snapshot at Timestamp",
         "operationId": "getSnapshotAt",
-        "description": "Return the snapshot whose `time` is closest to `{timestamp}`. The response includes a `gap_ms` field so you can see how stale the match is. Returns `404` with `SNAPSHOT_NOT_FOUND` when no snapshot falls within `tolerance_ms`.",
+        "description": "Returns the market's metadata together with the single snapshot whose `time` is closest to `{timestamp}`, embedded as `data.snapshot`. The snapshot carries a `gap_ms` field so you can see how stale the match is. Returns `404` with `SNAPSHOT_NOT_FOUND` when no snapshot falls within `tolerance_ms` of the requested time.",
         "parameters": [
           { "$ref": "#/components/parameters/Coin" },
           { "$ref": "#/components/parameters/Type" },
@@ -439,14 +460,35 @@
                 "schema": { "$ref": "#/components/schemas/SnapshotResponse" },
                 "example": {
                   "data": {
-                    "id": 1298412,
-                    "time": "2026-04-22T18:20:00.186Z",
                     "market_ticker": "KXBTC15M-26APR221830-T105000",
-                    "yes_best_bid": 0.48,
-                    "no_best_bid": 0.51,
-                    "coin_price": 104998.21,
-                    "seq": 12440,
-                    "gap_ms": 186
+                    "event_ticker": "KXBTC15M-26APR221830",
+                    "series_ticker": "KXBTC15M",
+                    "title": "Bitcoin above $105,000 at 18:30?",
+                    "subtitle": "15-minute market",
+                    "rules_primary": "If the final BTC price is strictly greater than $105,000 at 18:30 ET, this market resolves YES.",
+                    "strike_type": "greater",
+                    "floor_strike": 105000.0,
+                    "open_time": "2026-04-22T18:15:00Z",
+                    "close_time": "2026-04-22T18:30:00Z",
+                    "expiration_time": "2026-04-22T18:30:00Z",
+                    "coin_price_start": 104872.12,
+                    "coin_price_end": 105224.45,
+                    "expiration_value": 105224.45,
+                    "result": "yes",
+                    "settlement_ts": "2026-04-22T18:30:12Z",
+                    "status": "finalized",
+                    "created_at": "2026-04-22T18:14:58Z",
+                    "updated_at": "2026-04-22T18:30:12Z",
+                    "snapshot": {
+                      "id": 1298412,
+                      "time": "2026-04-22T18:20:00.186Z",
+                      "market_ticker": "KXBTC15M-26APR221830-T105000",
+                      "yes_best_bid": 0.48,
+                      "no_best_bid": 0.51,
+                      "coin_price": 104998.21,
+                      "seq": 12440,
+                      "gap_ms": 186
+                    }
                   },
                   "meta": {
                     "request_id": "req_a1b2c3d4e5f6",
@@ -996,18 +1038,55 @@
           }
         }
       },
+      "MarketWithSnapshots": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Market" },
+          {
+            "type": "object",
+            "properties": {
+              "snapshots": {
+                "type": "array",
+                "description": "Snapshots for this market, oldest-first. Filtered by `start_time` / `end_time` and the current pagination page.",
+                "items": { "$ref": "#/components/schemas/Snapshot" }
+              }
+            }
+          }
+        ]
+      },
+      "MarketWithSnapshot": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Market" },
+          {
+            "type": "object",
+            "properties": {
+              "snapshot": {
+                "allOf": [
+                  { "$ref": "#/components/schemas/Snapshot" },
+                  {
+                    "type": "object",
+                    "description": "The snapshot closest to the requested `{timestamp}`. Always carries a `gap_ms` field.",
+                    "required": ["gap_ms"]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
       "SnapshotsPageResponse": {
         "type": "object",
+        "description": "Market metadata wrapping a paginated forward-replay of snapshots.",
         "properties": {
-          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Snapshot" } },
+          "data": { "$ref": "#/components/schemas/MarketWithSnapshots" },
           "pagination": { "$ref": "#/components/schemas/Pagination" },
           "meta": { "$ref": "#/components/schemas/ResponseMeta" }
         }
       },
       "SnapshotResponse": {
         "type": "object",
+        "description": "Market metadata wrapping the single snapshot closest to the requested timestamp.",
         "properties": {
-          "data": { "$ref": "#/components/schemas/Snapshot" },
+          "data": { "$ref": "#/components/schemas/MarketWithSnapshot" },
           "meta": { "$ref": "#/components/schemas/ResponseMeta" }
         }
       }

@@ -9,23 +9,83 @@ import CoverageBeta from '/snippets/coverage-beta.mdx';
 
 ## What you get
 
-~100 ms orderbook snapshots for a single market, ordered `time ASC, id
-ASC` so the response reads as a forward replay.
+The market's metadata **plus** ~100 ms orderbook snapshots for that
+market, ordered `time ASC, id ASC` so the response reads as a forward
+replay. Embedding the market means you don't need a separate
+[Get Market](/api-reference/v1/get-market) call before processing the
+snapshot stream.
 
-## Snapshot payload
+## Response shape
 
-- `time` — wall-clock timestamp (UTC).
+```json
+{
+  "data": {
+    // ── market metadata (same shape as Get Market) ──
+    "market_ticker": "KXBTC15M-26APR221830-T105000",
+    "event_ticker": "KXBTC15M-26APR221830",
+    "series_ticker": "KXBTC15M",
+    "title": "Bitcoin above $105,000 at 18:30?",
+    "subtitle": "15-minute market",
+    "rules_primary": "If the final BTC price is strictly greater than $105,000 at 18:30 ET, this market resolves YES.",
+    "strike_type": "greater",
+    "floor_strike": 105000.0,
+    "open_time": "2026-04-22T18:15:00Z",
+    "close_time": "2026-04-22T18:30:00Z",
+    "expiration_time": "2026-04-22T18:30:00Z",
+    "coin_price_start": 104872.12,
+    "coin_price_end": 105224.45,
+    "expiration_value": 105224.45,
+    "result": "yes",
+    "settlement_ts": "2026-04-22T18:30:12Z",
+    "status": "finalized",
+
+    // ── snapshots replay, oldest-first ──
+    "snapshots": [
+      {
+        "id": 1298374,
+        "time": "2026-04-22T18:15:03.214Z",
+        "market_ticker": "KXBTC15M-26APR221830-T105000",
+        "yes_best_bid": 0.42,
+        "no_best_bid": 0.57,
+        "coin_price": 104872.45,
+        "seq": 8871
+      }
+    ]
+  },
+  "pagination": {
+    "next_cursor": "eyJ0cy...",
+    "has_more": true,
+    "limit": 100,
+    "count": 100,
+    "total_count": null
+  },
+  "meta": { "request_id": "req_…", "timestamp": "…" }
+}
+```
+
+The snapshots listed inside `data.snapshots` are already filtered to
+the requested `start_time` / `end_time` window and the current
+pagination page. Market metadata never paginates — it's the same on
+every page of the same `?cursor=` chain.
+
+## Snapshot fields
+
+- `time` — wall-clock timestamp of the capture (UTC).
+- `market_ticker` — the Kalshi market the snapshot belongs to.
 - `yes_best_bid`, `no_best_bid` — top-of-book prices (0.00 – 1.00).
-- `coin_price` — underlying coin price at capture time.
-- `seq` — Kalshi `orderbook_delta` sequence number.
+- `coin_price` — the underlying coin price at capture time.
+- `seq` — Kalshi `orderbook_delta` sequence number for reconstructing
+  diffs relative to the previous snapshot.
 - `orderbook_yes`, `orderbook_no` — top-15 YES / NO ladders as
-  `{"bids": [[price, qty], ...]}`. Only returned when
+  `{"bids": [[price, qty], ...]}`. Only present when
   `?include_orderbook=true`.
 
 ## Pagination
 
 Snapshots are returned **ascending** by time. Pass
-`pagination.next_cursor` forward and stop on `has_more === false`.
+`pagination.next_cursor` forward and stop on `has_more === false`. The
+market metadata is repeated on every page — cheap enough that it isn't
+worth deduplicating client-side.
 
 <Warning>
 `include_orderbook=true` at high `limit` returns much larger payloads —

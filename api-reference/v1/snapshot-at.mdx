@@ -9,17 +9,69 @@ import CoverageBeta from '/snippets/coverage-beta.mdx';
 
 ## What you get
 
-The snapshot whose `time` is closest to `{timestamp}` — passed as either
-a millisecond epoch or an ISO-8601 string. The response includes a
-`gap_ms` field so you can tell how stale the match is.
+The market's metadata **plus** the single snapshot whose `time` is
+closest to `{timestamp}`. The timestamp is passed as either a
+millisecond epoch or an ISO-8601 string. The embedded `gap_ms` tells
+you exactly how stale the match is.
 
 If no snapshot falls within `tolerance_ms` of the requested time, the
 response is `404` with `error.code = SNAPSHOT_NOT_FOUND` and
 `details.nearest_gap_ms` for diagnosis.
 
+## Response shape
+
+```json
+{
+  "data": {
+    // ── market metadata (same shape as Get Market) ──
+    "market_ticker": "KXBTC15M-26APR221830-T105000",
+    "event_ticker": "KXBTC15M-26APR221830",
+    "series_ticker": "KXBTC15M",
+    "title": "Bitcoin above $105,000 at 18:30?",
+    "subtitle": "15-minute market",
+    "strike_type": "greater",
+    "floor_strike": 105000.0,
+    "open_time": "2026-04-22T18:15:00Z",
+    "close_time": "2026-04-22T18:30:00Z",
+    "expiration_value": 105224.45,
+    "result": "yes",
+    "status": "finalized",
+
+    // ── single snapshot, with gap_ms ──
+    "snapshot": {
+      "id": 1298412,
+      "time": "2026-04-22T18:20:00.186Z",
+      "market_ticker": "KXBTC15M-26APR221830-T105000",
+      "yes_best_bid": 0.48,
+      "no_best_bid": 0.51,
+      "coin_price": 104998.21,
+      "seq": 12440,
+      "gap_ms": 186
+    }
+  },
+  "meta": { "request_id": "req_…", "timestamp": "…" }
+}
+```
+
+## Fields
+
+The `data` object is the full
+[Market](/api-reference/v1/get-market) record (same fields as Get
+Market) plus a `snapshot` key. The snapshot itself adds one extra
+field on top of the standard [snapshot
+shape](/api-reference/v1/list-snapshots#snapshot-fields):
+
+- `gap_ms` — milliseconds between the requested `timestamp` and the
+  returned snapshot's `time`. Always less than `tolerance_ms` on a
+  successful response.
+
+`orderbook_yes` / `orderbook_no` are returned only when
+`?include_orderbook=true`.
+
 <Tip>
 Use this to line a backtest decision up to a wall-clock moment without
 scanning the whole snapshot window. Snapshots are recorded at ~100 ms
 cadence, so the default `tolerance_ms=2000` is almost always the right
-value.
+value — tighten it if you need stricter matches and are happy to
+accept more `SNAPSHOT_NOT_FOUND` responses.
 </Tip>
