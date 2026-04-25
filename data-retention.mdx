@@ -12,16 +12,16 @@ import CoverageBeta from '/snippets/coverage-beta.mdx';
 
 | Table | Retention |
 | :--- | :--- |
-| `markets` | **31 rolling days** — markets whose `close_time` falls inside the window are queryable. Older rows are pruned. |
-| `snapshots` | **31 rolling days** — snapshots older than 31 days are pruned alongside their market. |
+| `markets` | **31 rolling days** - markets whose `close_time` falls inside the window are queryable. Older rows are pruned. |
+| `snapshots` | **31 rolling days** - snapshots older than 31 days are pruned alongside their market. |
 
 The snapshot worker runs at ~100 ms cadence from open through close, so
 a typical 15-minute market produces ~9,000 snapshots. Plan your page
-sizes accordingly — the API caps `limit` at 1,000 snapshots per call.
+sizes accordingly - the API caps `limit` at 1,000 snapshots per call.
 
 <Note>
 Retention is a rolling 31-day window during beta. Collection started on
-**26 April 2026**, so the window is still growing — see the banner at
+**26 April 2026**, so the window is still growing - see the banner at
 the top of this page. Longer retention tiers may ship later; for now
 every plan is capped at 31 days.
 </Note>
@@ -38,5 +38,5 @@ Two workers keep the data clean long after a market closes:
   underlying tick.
 
 Both run continuously, so a market queried 30 seconds after close might
-still report `result = null`. Poll again — it usually settles within a
+still report `result = null`. Poll again - it usually settles within a
 minute.

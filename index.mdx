@@ -1,6 +1,6 @@
 ---
 title: "Introduction"
-description: "Backtest-grade access to Kalshi up/down crypto markets — tickers and full-depth snapshots."
+description: "Backtest-grade access to Kalshi up/down crypto markets - tickers and full-depth snapshots."
 ---
 
 import CoverageBeta from '/snippets/coverage-beta.mdx';
@@ -74,12 +74,12 @@ curl "https://api.kalshibacktest.com/v1/btc/15m/markets/KXBTC15M-26APR221830-T10
 <Info>
 v1 puts the coin **and** the market type in the URL path
 (`/v1/{coin}/{type}/...`). One Kalshi Workers Postgres deployment
-backs each (coin, type) pair. Today we ship five deployments —
+backs each (coin, type) pair. Today we ship five deployments -
 `btc`, `eth`, `sol`, `doge`, `xrp`, all at `15m`.
 </Info>
 
 <Note>
-Every response uses the v1 envelope — `{ data, pagination?, meta }` for
+Every response uses the v1 envelope - `{ data, pagination?, meta }` for
 success, `{ error, meta }` for errors. See the [v1 Overview](/api-reference/v1/overview)
 for the full contract.
 </Note>

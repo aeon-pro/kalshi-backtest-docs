@@ -8,7 +8,7 @@ import CoverageBeta from '/snippets/coverage-beta.mdx';
 <CoverageBeta />
 
 Every endpoint on the Kalshi Public Data API lives under `/v1/`. The
-surface area is deliberately small — list markets, get a market, list
+surface area is deliberately small - list markets, get a market, list
 snapshots, snapshot at timestamp. That's it.
 
 ## Design
@@ -23,7 +23,7 @@ snapshots, snapshot at timestamp. That's it.
 
 ## Base URL
 
-- **`https://api.kalshibacktest.com`** — everyone
+- **`https://api.kalshibacktest.com`** - everyone
 
 ## Response envelope
 
@@ -80,7 +80,7 @@ Cursors are opaque base64url-encoded JSON snapshots of the last row's sort keys.
 curl 'https://api.kalshibacktest.com/v1/btc/15m/markets?limit=50' \
   -H "X-API-Key: $KBT_KEY"
 
-# Page 2 — pass the cursor from page 1
+# Page 2 - pass the cursor from page 1
 curl 'https://api.kalshibacktest.com/v1/btc/15m/markets?limit=50&cursor=eyJjdCI...' \
   -H "X-API-Key: $KBT_KEY"
 ```
@@ -90,7 +90,7 @@ Stop when `pagination.has_more === false`.
 <Note>
 Cursor pagination stays O(1) at any depth and uses the same Postgres
 indexes the rest of the service relies on. Keep sending the cursor
-forward — don't bounce back to offset.
+forward - don't bounce back to offset.
 </Note>
 
 ## Authentication

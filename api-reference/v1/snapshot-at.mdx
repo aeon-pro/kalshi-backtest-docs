@@ -49,7 +49,7 @@ response is `404` with `error.code = SNAPSHOT_NOT_FOUND` and
       "gap_ms": 186
     }
   },
-  "meta": { "request_id": "req_…", "timestamp": "…" }
+  "meta": { "request_id": "req_...", "timestamp": "..." }
 }
 ```
 
@@ -61,7 +61,7 @@ Market) plus a `snapshot` key. The snapshot itself adds one extra
 field on top of the standard [snapshot
 shape](/api-reference/v1/list-snapshots#snapshot-fields):
 
-- `gap_ms` — milliseconds between the requested `timestamp` and the
+- `gap_ms` - milliseconds between the requested `timestamp` and the
   returned snapshot's `time`. Always less than `tolerance_ms` on a
   successful response.
 
@@ -72,6 +72,6 @@ shape](/api-reference/v1/list-snapshots#snapshot-fields):
 Use this to line a backtest decision up to a wall-clock moment without
 scanning the whole snapshot window. Snapshots are recorded at ~100 ms
 cadence, so the default `tolerance_ms=2000` is almost always the right
-value — tighten it if you need stricter matches and are happy to
+value - tighten it if you need stricter matches and are happy to
 accept more `SNAPSHOT_NOT_FOUND` responses.
 </Tip>

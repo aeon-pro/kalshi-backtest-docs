@@ -23,7 +23,7 @@ settlement. Today we ship five deployments, all at 15-minute cadence:
 | **Ripple**    | `xrp`  | `15m` | `KXXRP15M`  |
 
 <Tip>
-v1 URLs are `GET /v1/{coin}/{type}/...` with lowercase segments —
+v1 URLs are `GET /v1/{coin}/{type}/...` with lowercase segments -
 e.g. `/v1/btc/15m/markets`, `/v1/xrp/15m/markets/.../snapshots`.
 </Tip>
 
@@ -31,14 +31,14 @@ e.g. `/v1/btc/15m/markets`, `/v1/xrp/15m/markets/.../snapshots`.
 
 Every row in `snapshots.data[]` carries:
 
-- `time` — wall-clock timestamp of the capture (UTC).
-- `market_ticker` — the Kalshi market the snapshot belongs to.
-- `yes_best_bid`, `no_best_bid` — top-of-book prices on the 0.00–1.00 scale.
-- `coin_price` — the underlying coin price at capture time.
-- `orderbook_yes`, `orderbook_no` — full top-15 ladders, as
+- `time` - wall-clock timestamp of the capture (UTC).
+- `market_ticker` - the Kalshi market the snapshot belongs to.
+- `yes_best_bid`, `no_best_bid` - top-of-book prices on the 0.00-1.00 scale.
+- `coin_price` - the underlying coin price at capture time.
+- `orderbook_yes`, `orderbook_no` - full top-15 ladders, as
   `{"bids": [[price, qty], ...]}`. Only sent when
   `?include_orderbook=true`.
-- `seq` — Kalshi's orderbook-delta sequence number for reconstructing
+- `seq` - Kalshi's orderbook-delta sequence number for reconstructing
   diffs relative to the previous snapshot.
 
 ## Market metadata
@@ -49,8 +49,8 @@ A market row summarises everything static + resolved about a contract:
 - `title`, `subtitle`, `rules_primary`
 - `strike_type`, `floor_strike`
 - `open_time`, `close_time`, `expiration_time`
-- `coin_price_start`, `coin_price_end` — snapshots at open + close
-- `expiration_value`, `result`, `settlement_ts` — the resolved outcome
+- `coin_price_start`, `coin_price_end` - snapshots at open + close
+- `expiration_value`, `result`, `settlement_ts` - the resolved outcome
 
 ## Data retention
 

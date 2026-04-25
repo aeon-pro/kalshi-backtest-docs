@@ -4,7 +4,7 @@
     "title": "KalshiBackTest API",
     "version": "1.0.0",
     "summary": "Markets and full-depth snapshots for every Kalshi up/down crypto market.",
-    "description": "The **KalshiBackTest API** exposes the data that powers [kalshibacktest.com](https://kalshibacktest.com): Kalshi up/down crypto market metadata plus ~100 ms orderbook snapshots from open through settlement.\n\nEvery response uses the v1 envelope — `{ data, pagination?, meta }` on success, `{ error, meta }` on error. All endpoints are rate-limited per API key; limits are exposed via `X-RateLimit-*` response headers.\n\n**Supported deployments today (`coin:type`):** `btc:15m`, `eth:15m`, `sol:15m`, `doge:15m`, `xrp:15m`.\n\nSee [Error Codes](/api-reference/v1/error-codes) for the full machine-readable error catalogue.",
+    "description": "The **KalshiBackTest API** exposes the data that powers [kalshibacktest.com](https://kalshibacktest.com): Kalshi up/down crypto market metadata plus ~100 ms orderbook snapshots from open through settlement.\n\nEvery response uses the v1 envelope - `{ data, pagination?, meta }` on success, `{ error, meta }` on error. All endpoints are rate-limited per API key; limits are exposed via `X-RateLimit-*` response headers.\n\n**Supported deployments today (`coin:type`):** `btc:15m`, `eth:15m`, `sol:15m`, `doge:15m`, `xrp:15m`.\n\nSee [Error Codes](/api-reference/v1/error-codes) for the full machine-readable error catalogue.",
     "contact": {
       "name": "KalshiBackTest Support",
       "url": "https://kalshibacktest.com",
@@ -41,7 +41,7 @@
         "tags": ["Utility"],
         "summary": "Health check",
         "operationId": "healthCheck",
-        "description": "Public health check — no API key required. Returns `ok` when every configured database pool is reachable, `degraded` otherwise. Use it as a liveness/readiness probe.",
+        "description": "Public health check - no API key required. Returns `ok` when every configured database pool is reachable, `degraded` otherwise. Use it as a liveness/readiness probe.",
         "security": [],
         "responses": {
           "200": {
@@ -84,14 +84,14 @@
         "tags": ["Kalshi Markets"],
         "summary": "List Markets",
         "operationId": "listMarkets",
-        "description": "Cursor-paginated markets for a single Kalshi Workers deployment (`{coin}` × `{type}`), ordered `close_time DESC, market_ticker DESC`.\n\nPagination is keyset — pass `pagination.next_cursor` from one response as `?cursor=` on the next request; stop when `has_more` is `false`. `total_count` is omitted by default; opt in with `?include_count=true`.",
+        "description": "Cursor-paginated markets for a single Kalshi Workers deployment (`{coin}` × `{type}`), ordered `close_time DESC, market_ticker DESC`.\n\nPagination is keyset - pass `pagination.next_cursor` from one response as `?cursor=` on the next request; stop when `has_more` is `false`. `total_count` is omitted by default; opt in with `?include_count=true`.",
         "parameters": [
           { "$ref": "#/components/parameters/Coin" },
           { "$ref": "#/components/parameters/Type" },
           {
             "name": "status",
             "in": "query",
-            "description": "Filter by Kalshi market status. The four *group* values below follow Kalshi's documented bucketing and each matches a set of underlying lifecycle states stored on the market:\n\n- `unopened` — `initialized` or `inactive`\n- `open` — `active`\n- `closed` — `closed`, `determined`, `disputed`, or `amended`\n- `settled` — `finalized`\n\nThe exact lifecycle values (e.g. `initialized`, `active`, `finalized`) are also accepted for precise filtering. Results always expose the lifecycle value in the response `status` field.",
+            "description": "Filter by Kalshi market status. The four *group* values below follow Kalshi's documented bucketing and each matches a set of underlying lifecycle states stored on the market:\n\n- `unopened` - `initialized` or `inactive`\n- `open` - `active`\n- `closed` - `closed`, `determined`, `disputed`, or `amended`\n- `settled` - `finalized`\n\nThe exact lifecycle values (e.g. `initialized`, `active`, `finalized`) are also accepted for precise filtering. Results always expose the lifecycle value in the response `status` field.",
             "required": false,
             "schema": {
               "type": "string",
@@ -126,7 +126,7 @@
           {
             "name": "limit",
             "in": "query",
-            "description": "Page size. 1–200.",
+            "description": "Page size. 1-200.",
             "required": false,
             "schema": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 },
             "example": 50
@@ -134,7 +134,7 @@
           {
             "name": "cursor",
             "in": "query",
-            "description": "Opaque keyset cursor from a prior `pagination.next_cursor`. Treat as an ASCII-safe string — do not parse.",
+            "description": "Opaque keyset cursor from a prior `pagination.next_cursor`. Treat as an ASCII-safe string - do not parse.",
             "required": false,
             "schema": { "type": "string" },
             "example": "eyJjdCI6IjIwMjYtMDQtMjJUMTg6MzA6MDBaIiwidGsiOiJLWEJUQzE1TS0yNkFQUjIyMTgzMC1UMTA1MDAwIn0"
@@ -275,7 +275,7 @@
         "tags": ["Kalshi Markets"],
         "summary": "List Market Snapshots",
         "operationId": "listSnapshots",
-        "description": "Returns the market's metadata together with a cursor-paginated forward replay of ~100 ms snapshots (oldest-first) inside `data.snapshots[]`. Embedding the market means a single round-trip is enough to start scoring against snapshots — no separate `Get Market` call needed.\n\nPass `include_orderbook=true` to receive full top-15 YES/NO ladders as `{\"bids\": [[price, qty], ...]}` on each snapshot. Large pages with orderbook depth can exceed 1 MB.",
+        "description": "Returns the market's metadata together with a cursor-paginated forward replay of ~100 ms snapshots (oldest-first) inside `data.snapshots[]`. Embedding the market means a single round-trip is enough to start scoring against snapshots - no separate `Get Market` call needed.\n\nPass `include_orderbook=true` to receive full top-15 YES/NO ladders as `{\"bids\": [[price, qty], ...]}` on each snapshot. Large pages with orderbook depth can exceed 1 MB.",
         "parameters": [
           { "$ref": "#/components/parameters/Coin" },
           { "$ref": "#/components/parameters/Type" },
@@ -307,7 +307,7 @@
           {
             "name": "limit",
             "in": "query",
-            "description": "Page size. 1–1000.",
+            "description": "Page size. 1-1000.",
             "required": false,
             "schema": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 100 },
             "example": 100
@@ -446,7 +446,7 @@
           {
             "name": "tolerance_ms",
             "in": "query",
-            "description": "Maximum acceptable gap (ms) between the request `timestamp` and the returned snapshot's `time`. 0–60000.",
+            "description": "Maximum acceptable gap (ms) between the request `timestamp` and the returned snapshot's `time`. 0-60000.",
             "required": false,
             "schema": { "type": "integer", "minimum": 0, "maximum": 60000, "default": 2000 },
             "example": 2000
@@ -891,7 +891,7 @@
           },
           "strike_type": {
             "type": ["string", "null"],
-            "description": "`greater` / `less` / `between` / `custom` — how the strike is evaluated.",
+            "description": "`greater` / `less` / `between` / `custom` - how the strike is evaluated.",
             "example": "greater"
           },
           "floor_strike": {
@@ -979,7 +979,7 @@
         "properties": {
           "bids": {
             "type": "array",
-            "description": "Top-15 `[price, qty]` pairs. Price is 0–100 cents (integer) per Kalshi's native format; qty is number of contracts.",
+            "description": "Top-15 `[price, qty]` pairs. Price is 0-100 cents (integer) per Kalshi's native format; qty is number of contracts.",
             "items": {
               "type": "array",
               "items": { "type": "number" },
@@ -1011,12 +1011,12 @@
           },
           "yes_best_bid": {
             "type": ["number", "null"],
-            "description": "Top-of-book YES bid (0.00 – 1.00).",
+            "description": "Top-of-book YES bid (0.00 - 1.00).",
             "example": 0.42
           },
           "no_best_bid": {
             "type": ["number", "null"],
-            "description": "Top-of-book NO bid (0.00 – 1.00).",
+            "description": "Top-of-book NO bid (0.00 - 1.00).",
             "example": 0.57
           },
           "coin_price": {

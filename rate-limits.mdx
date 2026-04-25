@@ -25,9 +25,9 @@ Only the rate limits apply.
 
 Every authenticated response carries:
 
-- `X-RateLimit-Limit` — the tightest active cap (per second or per minute, whichever you were closer to).
-- `X-RateLimit-Remaining` — how many slots you have left against that cap.
-- `Retry-After` — only on `429` responses; seconds to wait.
+- `X-RateLimit-Limit` - the tightest active cap (per second or per minute, whichever you were closer to).
+- `X-RateLimit-Remaining` - how many slots you have left against that cap.
+- `Retry-After` - only on `429` responses; seconds to wait.
 
 ### 429 responses
 

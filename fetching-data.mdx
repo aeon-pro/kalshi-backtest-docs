@@ -42,7 +42,7 @@ it back as `?cursor=...` on the next request:
 curl "https://api.kalshibacktest.com/v1/btc/15m/markets/KXBTC15M-26APR221830-T105000/snapshots?limit=500" \
   -H "X-API-Key: $KBT_KEY"
 
-# Page 2 — take next_cursor from page 1's pagination
+# Page 2 - take next_cursor from page 1's pagination
 curl "https://api.kalshibacktest.com/v1/btc/15m/markets/KXBTC15M-26APR221830-T105000/snapshots?limit=500&cursor=eyJjIjoi..." \
   -H "X-API-Key: $KBT_KEY"
 ```
@@ -54,7 +54,7 @@ Cursors encode the last row's sort key as base64url JSON. Compared to
 indexes the rest of the service relies on.
 
 <Warning>
-Cursors are opaque. Treat them as an ASCII-safe string — do not parse,
+Cursors are opaque. Treat them as an ASCII-safe string - do not parse,
 regex, or persist them across schema upgrades.
 </Warning>
 
@@ -62,8 +62,8 @@ regex, or persist them across schema upgrades.
 
 Every `timestamp`-shaped parameter accepts either:
 
-- **Millisecond epoch** — e.g. `1745520000000`.
-- **ISO-8601** — e.g. `2026-04-24T18:00:00Z` or `2026-04-24T18:00:00+00:00`.
+- **Millisecond epoch** - e.g. `1745520000000`.
+- **ISO-8601** - e.g. `2026-04-24T18:00:00Z` or `2026-04-24T18:00:00+00:00`.
 
 Unparseable values return `400` with `INVALID_TIMESTAMP` and the offending field in `details.field`.
 

@@ -21,7 +21,7 @@ bundle, or paste them into a public support channel.
 3. Select the **API Keys** tab.
 4. Click **Create New Key**, name it (e.g. "Backtest Worker"), and
    optionally set an expiration.
-5. **Copy the key immediately** — it is only shown once.
+5. **Copy the key immediately** - it is only shown once.
 
 <Note>
 Lost keys cannot be recovered. Revoke + re-issue instead.
@@ -29,7 +29,7 @@ Lost keys cannot be recovered. Revoke + re-issue instead.
 
 ## Using the API Key
 
-Pass the key on every request. Either header works — pick one:
+Pass the key on every request. Either header works - pick one:
 
 ```bash
 # Authorization: Bearer (recommended)
@@ -71,5 +71,5 @@ v1 errors surface a stable machine-readable `code` (full list on
 - **Set expirations** on sensitive keys and rotate on a schedule.
 - **Revoke unused keys** from the dashboard as soon as they are no
   longer in use.
-- **Scope by plan**, not by key — all of a user's keys share the same
+- **Scope by plan**, not by key - all of a user's keys share the same
   plan limits.
