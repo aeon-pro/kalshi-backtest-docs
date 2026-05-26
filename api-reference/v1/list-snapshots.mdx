@@ -3,10 +3,6 @@ title: 'List Market Snapshots'
 openapi: 'GET /v1/{coin}/{type}/markets/{ticker}/snapshots'
 ---
 
-import CoverageBeta from '/snippets/coverage-beta.mdx';
-
-<CoverageBeta />
-
 ## What you get
 
 The market's metadata **plus** ~100 ms orderbook snapshots for that
@@ -18,7 +14,7 @@ snapshot stream.
 <Info>
 Free keys can query snapshots only for the newest 50 markets in the
 requested `(coin, type)` pair. Pro keys can query snapshots for all
-retained markets.
+markets inside the 31-day retained window.
 </Info>
 
 ## Response shape

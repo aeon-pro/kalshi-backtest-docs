@@ -13,14 +13,14 @@ burst bucket and a per-minute sustained bucket.
 
 | Plan | Requests / second | Requests / minute | Market history access |
 | :--- | :--- | :--- | :--- |
-| **Free** | **1** | **60** | Newest 5 markets per `(coin × type)` |
-| **Pro** | **10** | **300** | All retained history |
+| **Free** | **1** | **60** | Newest 50 markets per `(coin × type)` |
+| **Pro** | **10** | **300** | Full 31-day retained history |
 
 <Info>
 Free keys can still access all five deployments
 (`btc:15m`, `eth:15m`, `sol:15m`, `doge:15m`, `xrp:15m`), but only the
 newest 50 markets in each deployment. Upgrade to Pro for the full
-retained window.
+31-day retained window.
 </Info>
 
 ### Rate limit headers

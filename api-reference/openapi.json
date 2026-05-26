@@ -84,7 +84,7 @@
         "tags": ["Kalshi Markets"],
         "summary": "List Markets",
         "operationId": "listMarkets",
-        "description": "Cursor-paginated markets for a single Kalshi Workers deployment (`{coin}` × `{type}`), ordered `close_time DESC, market_ticker DESC`.\n\nFree keys list only the newest 50 markets per deployment. Pro keys can page through all retained history.\n\nPagination is keyset - pass `pagination.next_cursor` from one response as `?cursor=` on the next request; stop when `has_more` is `false`. `total_count` is omitted by default; opt in with `?include_count=true`.",
+        "description": "Cursor-paginated markets for a single Kalshi Workers deployment (`{coin}` × `{type}`), ordered `close_time DESC, market_ticker DESC`.\n\nFree keys list only the newest 50 markets per deployment. Pro keys can page through the full 31-day retained history.\n\nPagination is keyset - pass `pagination.next_cursor` from one response as `?cursor=` on the next request; stop when `has_more` is `false`. `total_count` is omitted by default; opt in with `?include_count=true`.",
         "parameters": [
           { "$ref": "#/components/parameters/Coin" },
           { "$ref": "#/components/parameters/Type" },
@@ -276,7 +276,7 @@
         "tags": ["Kalshi Markets"],
         "summary": "List Market Snapshots",
         "operationId": "listSnapshots",
-        "description": "Returns the market's metadata together with a cursor-paginated forward replay of ~100 ms snapshots (oldest-first) inside `data.snapshots[]`. Embedding the market means a single round-trip is enough to start scoring against snapshots - no separate `Get Market` call needed.\n\nFree keys can query snapshots only for the newest 50 markets in the requested `(coin, type)` pair. Pro keys can query snapshots for all retained markets.\n\nPass `include_orderbook=true` to receive full top-15 YES/NO ladders as `{\"bids\": [[price, qty], ...]}` on each snapshot. Large pages with orderbook depth can exceed 1 MB.",
+        "description": "Returns the market's metadata together with a cursor-paginated forward replay of ~100 ms snapshots (oldest-first) inside `data.snapshots[]`. Embedding the market means a single round-trip is enough to start scoring against snapshots - no separate `Get Market` call needed.\n\nFree keys can query snapshots only for the newest 50 markets in the requested `(coin, type)` pair. Pro keys can query snapshots for all markets inside the 31-day retained window.\n\nPass `include_orderbook=true` to receive full top-15 YES/NO ladders as `{\"bids\": [[price, qty], ...]}` on each snapshot. Large pages with orderbook depth can exceed 1 MB.",
         "parameters": [
           { "$ref": "#/components/parameters/Coin" },
           { "$ref": "#/components/parameters/Type" },

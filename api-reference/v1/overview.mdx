@@ -3,10 +3,6 @@ title: 'v1 Overview'
 description: 'Coin-and-type-in-path URLs, cursor pagination, and a consistent JSON envelope.'
 ---
 
-import CoverageBeta from '/snippets/coverage-beta.mdx';
-
-<CoverageBeta />
-
 Every endpoint on the Kalshi Public Data API lives under `/v1/`. The
 surface area is deliberately small - list markets, get a market, list
 snapshots, snapshot at timestamp. That's it.
@@ -73,9 +69,10 @@ The HTTP status is set per the error `code` (see [Error Codes](/api-reference/v1
 
 ## Plan access
 
-Free keys can access the newest 50 markets per `(coin × type)` deployment
-at 1 request per second / 60 requests per minute. Pro keys can access all retained history at
-10 requests per second / 300 requests per minute.
+Free keys can access the newest 50 markets per `(coin × type)`
+deployment at 1 request per second / 60 requests per minute. Pro keys
+can access the full 31-day retained window at 10 requests per second /
+300 requests per minute.
 
 ## Cursor pagination
 

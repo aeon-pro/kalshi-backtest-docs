@@ -4,10 +4,6 @@ description: 'How long we keep market metadata and snapshots.'
 icon: 'database'
 ---
 
-import CoverageBeta from '/snippets/coverage-beta.mdx';
-
-<CoverageBeta />
-
 ## Retention policy
 
 | Table | Retention |
@@ -20,16 +16,14 @@ a typical 15-minute market produces ~9,000 snapshots. Plan your page
 sizes accordingly - the API caps `limit` at 1,000 snapshots per call.
 
 <Note>
-Retention is a rolling 31-day window during beta. Collection started on
-**26 April 2026**, so the window is still growing - see the banner at
-the top of this page. Longer retention tiers may ship later; for now
-every plan is capped at 31 days.
+Retention is a full rolling 31-day window. Longer retention tiers may
+ship later; for now every plan is capped at 31 days.
 </Note>
 
 <Info>
 Plan access is separate from retention. Free keys can access the newest
-5 markets in each `(coin × type)` deployment; Pro keys can access all
-markets still inside the retained rolling window.
+50 markets in each `(coin × type)` deployment; Pro keys can access all
+markets inside the 31-day retained rolling window.
 </Info>
 
 ## Settlement + backfill

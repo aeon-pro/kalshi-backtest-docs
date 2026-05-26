@@ -3,10 +3,6 @@ title: 'List Markets'
 openapi: 'GET /v1/{coin}/{type}/markets'
 ---
 
-import CoverageBeta from '/snippets/coverage-beta.mdx';
-
-<CoverageBeta />
-
 ## What you get
 
 Cursor-paginated markets for a single Kalshi Workers deployment
@@ -27,6 +23,6 @@ included when you pass `?include_count=true` (it runs a `COUNT(*)`).
 <Info>
 Free keys list only the newest 50 markets in each deployment
 (`btc:15m`, `eth:15m`, `sol:15m`, `doge:15m`, `xrp:15m`). Pro keys can
-page through all retained history. Rate limits still apply: see
+page through the full 31-day retained history. Rate limits still apply: see
 [Rate Limits](/rate-limits).
 </Info>
