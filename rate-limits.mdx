@@ -1,6 +1,6 @@
 ---
 title: 'Rate Limits'
-description: 'Per-second and per-minute caps on the free plan.'
+description: 'Per-second, per-minute, and market-window limits by plan.'
 icon: 'gauge-high'
 ---
 
@@ -9,16 +9,18 @@ icon: 'gauge-high'
 Rate limits are per API key and enforced in Redis with a per-second
 burst bucket and a per-minute sustained bucket.
 
-### Free plan (everyone)
+### Plan limits
 
-| Requests / second | Requests / minute |
-| :--- | :--- |
-| **10** | **300** |
+| Plan | Requests / second | Requests / minute | Market history access |
+| :--- | :--- | :--- | :--- |
+| **Free** | **1** | **60** | Newest 5 markets per `(coin × type)` |
+| **Pro** | **10** | **300** | All retained history |
 
 <Info>
-v1 ships a single `free` plan with everything available: all five
-`(coin × type)` deployments, no history cap, no blocked endpoints.
-Only the rate limits apply.
+Free keys can still access all five deployments
+(`btc:15m`, `eth:15m`, `sol:15m`, `doge:15m`, `xrp:15m`), but only the
+newest 50 markets in each deployment. Upgrade to Pro for the full
+retained window.
 </Info>
 
 ### Rate limit headers
@@ -35,8 +37,8 @@ Every authenticated response carries:
 {
   "error": {
     "code": "RATE_LIMIT_BURST",
-    "message": "RATE_LIMIT_BURST: limit 10 per second",
-    "details": { "retry_after": 1, "limit": 10, "window": "second" }
+    "message": "RATE_LIMIT_BURST: limit 1 per second",
+    "details": { "retry_after": 1, "limit": 1, "window": "second" }
   },
   "meta": { "request_id": "req_a1b2c3d4e5f6", "timestamp": "2026-04-24T18:00:00Z" }
 }
@@ -46,8 +48,8 @@ Every authenticated response carries:
 {
   "error": {
     "code": "RATE_LIMIT_SUSTAINED",
-    "message": "RATE_LIMIT_SUSTAINED: limit 300 per minute",
-    "details": { "retry_after": 47, "limit": 300, "window": "minute" }
+    "message": "RATE_LIMIT_SUSTAINED: limit 60 per minute",
+    "details": { "retry_after": 47, "limit": 60, "window": "minute" }
   },
   "meta": { "request_id": "req_...", "timestamp": "2026-04-24T18:00:00Z" }
 }

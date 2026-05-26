@@ -15,6 +15,12 @@ replay. Embedding the market means you don't need a separate
 [Get Market](/api-reference/v1/get-market) call before processing the
 snapshot stream.
 
+<Info>
+Free keys can query snapshots only for the newest 50 markets in the
+requested `(coin, type)` pair. Pro keys can query snapshots for all
+retained markets.
+</Info>
+
 ## Response shape
 
 ```json

@@ -9,8 +9,8 @@ Every v1 error follows the same shape:
 {
   "error": {
     "code": "RATE_LIMIT_BURST",
-    "message": "RATE_LIMIT_BURST: limit 10 per second",
-    "details": { "retry_after": 1, "limit": 10, "window": "second" }
+    "message": "RATE_LIMIT_BURST: limit 1 per second",
+    "details": { "retry_after": 1, "limit": 1, "window": "second" }
   },
   "meta": { "request_id": "req_a1b2c3d4e5f6", "timestamp": "2026-04-24T18:00:00Z" }
 }
@@ -34,6 +34,12 @@ Branch on `error.code`, not on `error.message` (messages may evolve).
 | `RATE_LIMIT_SUSTAINED` | Per-minute sustained limit exceeded. |
 
 429 responses also carry a `Retry-After` header.
+
+## Plan / entitlement (403)
+
+| Code | When |
+|---|---|
+| `PLAN_UPGRADE_REQUIRED` | The API key's plan cannot access the requested market window, for example a free key requesting a market older than the newest 50 for that `(coin, type)`. |
 
 ## Validation (400)
 

@@ -62,14 +62,20 @@ snapshots, snapshot at timestamp. That's it.
 {
   "error": {
     "code": "RATE_LIMIT_BURST",
-    "message": "RATE_LIMIT_BURST: limit 10 per second",
-    "details": { "retry_after": 1, "limit": 10, "window": "second" }
+    "message": "RATE_LIMIT_BURST: limit 1 per second",
+    "details": { "retry_after": 1, "limit": 1, "window": "second" }
   },
   "meta": { "request_id": "req_...", "timestamp": "2026-04-24T18:00:00Z" }
 }
 ```
 
 The HTTP status is set per the error `code` (see [Error Codes](/api-reference/v1/error-codes)).
+
+## Plan access
+
+Free keys can access the newest 50 markets per `(coin × type)` deployment
+at 1 request per second / 60 requests per minute. Pro keys can access all retained history at
+10 requests per second / 300 requests per minute.
 
 ## Cursor pagination
 

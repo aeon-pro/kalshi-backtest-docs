@@ -25,8 +25,8 @@ next. Stop when `pagination.has_more === false`. `total_count` is only
 included when you pass `?include_count=true` (it runs a `COUNT(*)`).
 
 <Info>
-v1 ships a single `free` plan with everything open - all five
-deployments (`btc:15m`, `eth:15m`, `sol:15m`, `doge:15m`, `xrp:15m`),
-no history cap. Rate limits still apply: see
+Free keys list only the newest 50 markets in each deployment
+(`btc:15m`, `eth:15m`, `sol:15m`, `doge:15m`, `xrp:15m`). Pro keys can
+page through all retained history. Rate limits still apply: see
 [Rate Limits](/rate-limits).
 </Info>

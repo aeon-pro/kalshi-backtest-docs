@@ -21,4 +21,7 @@ they outlive any URL-slug choices we might make on kalshibacktest.com.
 
 <Info>
 Unknown tickers return `404` with `error.code = MARKET_NOT_FOUND`.
+Free keys can fetch only the newest 50 markets for the requested
+`(coin, type)` pair. Older known tickers return `403` with
+`error.code = PLAN_UPGRADE_REQUIRED`.
 </Info>

@@ -18,6 +18,12 @@ If no snapshot falls within `tolerance_ms` of the requested time, the
 response is `404` with `error.code = SNAPSHOT_NOT_FOUND` and
 `details.nearest_gap_ms` for diagnosis.
 
+<Info>
+Free keys can query point-in-time snapshots only for the newest 50
+markets in the requested `(coin, type)` pair. Older known markets
+return `403` with `error.code = PLAN_UPGRADE_REQUIRED`.
+</Info>
+
 ## Response shape
 
 ```json
