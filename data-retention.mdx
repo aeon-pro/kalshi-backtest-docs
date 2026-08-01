@@ -8,22 +8,27 @@ icon: 'database'
 
 | Table | Retention |
 | :--- | :--- |
-| `markets` | **31 rolling days** - markets whose `close_time` falls inside the window are queryable. Older rows are pruned. |
-| `snapshots` | **31 rolling days** - snapshots older than 31 days are pruned alongside their market. |
+| `markets` | **90 rolling days** - markets whose `close_time` falls inside the archive window are retained. Older rows are pruned. |
+| `snapshots` | **90 rolling days** - snapshots are pruned alongside markets older than 90 days. |
 
 The snapshot worker runs at ~100 ms cadence from open through close, so
 a typical 15-minute market produces ~9,000 snapshots. Plan your page
 sizes accordingly - the API caps `limit` at 1,000 snapshots per call.
 
 <Note>
-Retention is a full rolling 31-day window. Longer retention tiers may
-ship later; for now every plan is capped at 31 days.
+Retention is a full rolling 90-day archive. Your subscription still controls
+whether your API key can read 31, 60, or 90 days of that archive.
 </Note>
 
 <Info>
-Plan access is separate from retention. Free keys can access the newest
-50 markets in each `(coin × type)` deployment; Pro keys can access all
-markets inside the 31-day retained rolling window.
+Plan access is separate from retention. Free accounts can access the newest 50
+markets in each `(coin × type)` deployment, subject to a 31-day cap. Shared
+paid configurations can access all markets inside their purchased 31-, 60-,
+or 90-day window.
+
+An omitted `start_time` is clamped to the cutoff. An explicit timestamp,
+cursor, market `close_time`, or snapshot-at timestamp before the cutoff returns
+`HISTORY_LIMIT_EXCEEDED`.
 </Info>
 
 ## Settlement + backfill

@@ -9,8 +9,8 @@ Every v1 error follows the same shape:
 {
   "error": {
     "code": "RATE_LIMIT_BURST",
-    "message": "RATE_LIMIT_BURST: limit 1 per second",
-    "details": { "retry_after": 1, "limit": 1, "window": "second" }
+    "message": "This account exceeded its effective second request limit.",
+    "details": { "retry_after": 1, "limit": 10, "window": "second", "scope": "account" }
   },
   "meta": { "request_id": "req_a1b2c3d4e5f6", "timestamp": "2026-04-24T18:00:00Z" }
 }
@@ -40,6 +40,7 @@ Branch on `error.code`, not on `error.message` (messages may evolve).
 | Code | When |
 |---|---|
 | `PLAN_UPGRADE_REQUIRED` | The API key's plan cannot access the requested market window, for example a free key requesting a market older than the newest 50 for that `(coin, type)`. |
+| `HISTORY_LIMIT_EXCEEDED` | A requested date, cursor, market, or snapshot is older than the effective history cutoff. Read `details.earliest_allowed` and retry with a newer value. |
 
 ## Validation (400)
 

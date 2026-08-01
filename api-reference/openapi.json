@@ -4,7 +4,7 @@
     "title": "KalshiBackTest API",
     "version": "1.0.0",
     "summary": "Markets and full-depth snapshots for every Kalshi up/down crypto market.",
-    "description": "The **KalshiBackTest API** exposes the data that powers [kalshibacktest.com](https://kalshibacktest.com): Kalshi up/down crypto market metadata plus ~100 ms orderbook snapshots from open through settlement.\n\nEvery response uses the v1 envelope - `{ data, pagination?, meta }` on success, `{ error, meta }` on error. All endpoints are rate-limited per API key; limits are exposed via `X-RateLimit-*` response headers.\n\n**Supported deployments today (`coin:type`):** `btc:15m`, `eth:15m`, `sol:15m`, `doge:15m`, `xrp:15m`.\n\nSee [Error Codes](/api-reference/v1/error-codes) for the full machine-readable error catalogue.",
+    "description": "The **KalshiBackTest API** exposes the data that powers [kalshibacktest.com](https://kalshibacktest.com): Kalshi up/down crypto market metadata plus ~100 ms orderbook snapshots from open through settlement.\n\nEvery response uses the v1 envelope - `{ data, pagination?, meta }` on success, `{ error, meta }` on error. All endpoints are rate-limited per account; every API key on an account shares the purchased allowance. Limits are exposed via `X-RateLimit-*` response headers. Shared paid history is 31, 60, or 90 days according to the purchased configuration.\n\n**Supported deployments today (`coin:type`):** `btc:15m`, `eth:15m`, `sol:15m`, `doge:15m`, `xrp:15m`.\n\nSee [Error Codes](/api-reference/v1/error-codes) for the full machine-readable error catalogue.",
     "contact": {
       "name": "KalshiBackTest Support",
       "url": "https://kalshibacktest.com",
@@ -84,7 +84,7 @@
         "tags": ["Kalshi Markets"],
         "summary": "List Markets",
         "operationId": "listMarkets",
-        "description": "Cursor-paginated markets for a single Kalshi Workers deployment (`{coin}` × `{type}`), ordered `close_time DESC, market_ticker DESC`.\n\nFree keys list only the newest 50 markets per deployment. Pro keys can page through the full 31-day retained history.\n\nPagination is keyset - pass `pagination.next_cursor` from one response as `?cursor=` on the next request; stop when `has_more` is `false`. `total_count` is omitted by default; opt in with `?include_count=true`.",
+        "description": "Cursor-paginated markets for a single Kalshi Workers deployment (`{coin}` × `{type}`), ordered `close_time DESC, market_ticker DESC`.\n\nFree accounts list only the newest 50 markets per deployment. Shared paid configurations can page through their purchased 31-, 60-, or 90-day history window. Requests and cursors older than the effective cutoff return `HISTORY_LIMIT_EXCEEDED`.\n\nPagination is keyset - pass `pagination.next_cursor` from one response as `?cursor=` on the next request; stop when `has_more` is `false`. `total_count` is omitted by default; opt in with `?include_count=true`.",
         "parameters": [
           { "$ref": "#/components/parameters/Coin" },
           { "$ref": "#/components/parameters/Type" },
@@ -195,6 +195,7 @@
           },
           "400": { "$ref": "#/components/responses/ValidationError" },
           "401": { "$ref": "#/components/responses/AuthError" },
+          "403": { "$ref": "#/components/responses/PlanUpgradeError" },
           "429": { "$ref": "#/components/responses/RateLimitError" }
         }
       }
@@ -276,7 +277,7 @@
         "tags": ["Kalshi Markets"],
         "summary": "List Market Snapshots",
         "operationId": "listSnapshots",
-        "description": "Returns the market's metadata together with a cursor-paginated forward replay of ~100 ms snapshots (oldest-first) inside `data.snapshots[]`. Embedding the market means a single round-trip is enough to start scoring against snapshots - no separate `Get Market` call needed.\n\nFree keys can query snapshots only for the newest 50 markets in the requested `(coin, type)` pair. Pro keys can query snapshots for all markets inside the 31-day retained window.\n\nPass `include_orderbook=true` to receive full top-15 YES/NO ladders as `{\"bids\": [[price, qty], ...]}` on each snapshot. Large pages with orderbook depth can exceed 1 MB.",
+        "description": "Returns the market's metadata together with a cursor-paginated forward replay of ~100 ms snapshots (oldest-first) inside `data.snapshots[]`. Embedding the market means a single round-trip is enough to start scoring against snapshots - no separate `Get Market` call needed.\n\nFree accounts can query snapshots only for the newest 50 markets in the requested `(coin, type)` pair. Shared paid configurations can query snapshots for all markets inside their purchased 31-, 60-, or 90-day window. Older timestamps and cursors return `HISTORY_LIMIT_EXCEEDED`.\n\nPass `include_orderbook=true` to receive full top-15 YES/NO ladders as `{\"bids\": [[price, qty], ...]}` on each snapshot. Large pages with orderbook depth can exceed 1 MB.",
         "parameters": [
           { "$ref": "#/components/parameters/Coin" },
           { "$ref": "#/components/parameters/Type" },
@@ -691,26 +692,51 @@
         }
       },
       "PlanUpgradeError": {
-        "description": "The current plan cannot access the requested market window.",
+        "description": "The account cannot access the requested market window or requested data predates its effective history cutoff.",
         "content": {
           "application/json": {
             "schema": { "$ref": "#/components/schemas/ErrorResponse" },
-            "example": {
-              "error": {
-                "code": "PLAN_UPGRADE_REQUIRED",
-                "message": "Your plan can only access the newest 50 BTC 15m markets. Upgrade to Pro for full history.",
-                "details": {
-                  "plan": "free",
-                  "coin": "btc",
-                  "type": "15m",
-                  "market_ticker": "KXBTC15M-26APR221830-T105000",
-                  "market_window_limit": 50,
-                  "upgrade_required": true
+            "examples": {
+              "NewestMarketWindow": {
+                "summary": "Free newest-50 window exceeded",
+                "value": {
+                  "error": {
+                    "code": "PLAN_UPGRADE_REQUIRED",
+                    "message": "Your plan can only access the newest 50 BTC 15m markets. Upgrade for a full paid history window.",
+                    "details": {
+                      "plan": "free",
+                      "coin": "btc",
+                      "type": "15m",
+                      "market_ticker": "KXBTC15M-26APR221830-T105000",
+                      "market_window_limit": 50,
+                      "upgrade_required": true
+                    }
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
                 }
               },
-              "meta": {
-                "request_id": "req_a1b2c3d4e5f6",
-                "timestamp": "2026-04-24T18:00:00Z"
+              "HistoryCutoff": {
+                "summary": "Effective history cutoff exceeded",
+                "value": {
+                  "error": {
+                    "code": "HISTORY_LIMIT_EXCEEDED",
+                    "message": "start_time is older than the effective 31-day history limit",
+                    "details": {
+                      "history_days": 31,
+                      "earliest_allowed": "2026-03-24T18:00:00Z",
+                      "requested": "2026-03-23T18:00:00Z",
+                      "field": "start_time",
+                      "guidance": "Use a timestamp on or after earliest_allowed."
+                    }
+                  },
+                  "meta": {
+                    "request_id": "req_a1b2c3d4e5f6",
+                    "timestamp": "2026-04-24T18:00:00Z"
+                  }
+                }
               }
             }
           }
@@ -741,8 +767,8 @@
                 "value": {
                   "error": {
                     "code": "RATE_LIMIT_BURST",
-                    "message": "RATE_LIMIT_BURST: limit 1 per second",
-                    "details": { "retry_after": 1, "limit": 1, "window": "second" }
+                    "message": "This account exceeded its effective second request limit.",
+                    "details": { "retry_after": 1, "limit": 10, "window": "second", "rate_limit_per_second": 10, "rate_limit_per_minute": 300, "scope": "account", "guidance": "Retry after the indicated delay or select a higher RPS configuration in Billing." }
                   },
                   "meta": {
                     "request_id": "req_a1b2c3d4e5f6",
@@ -755,8 +781,8 @@
                 "value": {
                   "error": {
                     "code": "RATE_LIMIT_SUSTAINED",
-                    "message": "RATE_LIMIT_SUSTAINED: limit 60 per minute",
-                    "details": { "retry_after": 47, "limit": 60, "window": "minute" }
+                    "message": "This account exceeded its effective minute request limit.",
+                    "details": { "retry_after": 47, "limit": 300, "window": "minute", "rate_limit_per_second": 10, "rate_limit_per_minute": 300, "scope": "account", "guidance": "Retry after the indicated delay or select a higher RPS configuration in Billing." }
                   },
                   "meta": {
                     "request_id": "req_a1b2c3d4e5f6",

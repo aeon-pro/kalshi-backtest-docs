@@ -48,9 +48,11 @@ Postgres, so the path is also the routing key.
 </Info>
 
 <Info>
-All of a user's keys share the same plan. Free keys can access the
-newest 50 markets per `(coin × type)` at 1 request per second / 60 requests per minute. Pro keys can
-access the full 31-day retained window at 10 requests per second / 300 requests per minute.
+All of your keys share one account allowance. Creating more keys does not
+multiply throughput. Free accounts receive 1 request per second / 60 requests
+per minute and the newest 50 markets per `(coin × type)`. Paid configurations
+provide 10–50 requests per second / 300–2,000 requests per minute and your
+selected 31-, 60-, or 90-day history window.
 </Info>
 
 ### Base URL
@@ -77,5 +79,5 @@ v1 errors surface a stable machine-readable `code` (full list on
 - **Set expirations** on sensitive keys and rotate on a schedule.
 - **Revoke unused keys** from the dashboard as soon as they are no
   longer in use.
-- **Scope by plan**, not by key - all of a user's keys share the same
-  plan limits.
+- **Plan for account-wide traffic** - every key consumes the same per-second
+  and per-minute allowance.
